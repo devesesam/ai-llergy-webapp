@@ -15,10 +15,10 @@ export const DIETARY_PREFERENCES: Allergen[] = [
 export const ALLERGENS: Allergen[] = [
   // Tier 2: Most Common (Big 9)
   { id: "peanuts", label: "Peanuts", icon: "🥜", columnName: "PEANUT FREE" },
-  { id: "treenuts", label: "Tree Nuts", icon: "🌰", columnName: "TREE NUT FREE" },
+  { id: "treenuts", label: "Tree Nuts", icon: "🌳", columnName: "TREE NUT FREE" },
   { id: "eggs", label: "Eggs", icon: "🥚", columnName: "EGG FREE" },
   { id: "dairy", label: "Dairy", icon: "🥛", columnName: "DAIRY FREE" },
-  { id: "gluten", label: "Gluten", icon: "🌾", columnName: "GLUTEN FREE" },
+  { id: "gluten", label: "Gluten", icon: "🍞", columnName: "GLUTEN FREE" },
   { id: "soy", label: "Soy", icon: "🌱", columnName: "SOY FREE" },
   { id: "fish", label: "Fish", icon: "🐟", columnName: "FISH FREE" },
   { id: "shellfish", label: "Shellfish", icon: "🦐", columnName: "SHELLFISH FREE" },
@@ -26,8 +26,8 @@ export const ALLERGENS: Allergen[] = [
 
   // Tier 3: Specific Nuts
   { id: "almond", label: "Almond", icon: "🌰", columnName: "ALMOND FREE" },
-  { id: "walnut", label: "Walnut", icon: "🌰", columnName: "WALNUT FREE" },
-  { id: "pistachio", label: "Pistachio", icon: "🥜", columnName: "PISTACHIO FREE" },
+  { id: "walnut", label: "Walnut", icon: "🟤", columnName: "WALNUT FREE" },
+  { id: "pistachio", label: "Pistachio", icon: "🟢", columnName: "PISTACHIO FREE" },
 
   // Tier 4: Less Common / Regional
   { id: "wheat", label: "Wheat", icon: "🌾", columnName: "WHEAT FREE" },
