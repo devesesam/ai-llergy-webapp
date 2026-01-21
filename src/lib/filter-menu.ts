@@ -100,5 +100,14 @@ export function formatWarnings(warnings: string[]): string[] {
     vegan: "Vegan",
   };
 
-  return warnings.map((w) => `Can be made ${allergenLabels[w] || w}-free on request`);
+  // Dietary preferences don't use "-free" suffix
+  const dietaryPreferences = new Set(["vegan", "vegetarian"]);
+
+  return warnings.map((w) => {
+    const label = allergenLabels[w] || w;
+    if (dietaryPreferences.has(w)) {
+      return `Can be made ${label} on request`;
+    }
+    return `Can be made ${label}-free on request`;
+  });
 }
