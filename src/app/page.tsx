@@ -4,7 +4,22 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import DisclaimerModal from "@/components/DisclaimerModal";
 import AllergenGrid from "@/components/AllergenGrid";
-import { ALLERGENS } from "@/lib/allergens";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import MenuResults from "@/components/MenuResults";
+
+interface MenuItemData {
+  name: string;
+  ingredients: string;
+  price: number;
+  warnings: string[];
+}
+
+interface ResultsData {
+  safeItems: MenuItemData[];
+  cautionItems: MenuItemData[];
+  excludedCount: number;
+  customAllergyNote?: string;
+}
 
 export default function Home() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
@@ -13,6 +28,7 @@ export default function Home() {
   );
   const [customAllergy, setCustomAllergy] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [results, setResults] = useState<ResultsData | null>(null);
 
   useEffect(() => {
     // Show disclaimer modal after a short delay
@@ -64,19 +80,13 @@ export default function Home() {
 
       const data = await response.json();
 
-      // Build display list
-      const displayList = allergenList.map(
-        (id) => ALLERGENS.find((a) => a.id === id)?.label || id
-      );
-      if (customAllergy.trim()) {
-        displayList.push(`Custom: ${customAllergy.trim()}`);
-      }
-
-      alert(`We will filter the menu for:\n- ${displayList.join("\n- ")}`);
-
-      // Reset form after successful submission
-      setSelectedAllergens(new Set());
-      setCustomAllergy("");
+      // Store results and show results view
+      setResults({
+        safeItems: data.safeItems,
+        cautionItems: data.cautionItems,
+        excludedCount: data.excludedCount,
+        customAllergyNote: data.customAllergyNote,
+      });
     } catch (error) {
       console.error("Submission error:", error);
       alert("There was an error submitting your request. Please try again.");
@@ -84,6 +94,45 @@ export default function Home() {
       setIsSubmitting(false);
     }
   };
+
+  const handleStartOver = () => {
+    setResults(null);
+    setSelectedAllergens(new Set());
+    setCustomAllergy("");
+  };
+
+  // Show results view if we have results
+  if (results) {
+    return (
+      <>
+        <DisclaimerModal
+          isOpen={showDisclaimer}
+          onAgree={() => setShowDisclaimer(false)}
+        />
+
+        <div className="app-container">
+          <header>
+            <Image
+              src="/images/logo.png"
+              alt="Mosaic Logo"
+              width={60}
+              height={60}
+              className="logo"
+            />
+            <h1>AI-llergy</h1>
+          </header>
+
+          <MenuResults
+            safeItems={results.safeItems}
+            cautionItems={results.cautionItems}
+            excludedCount={results.excludedCount}
+            customAllergyNote={results.customAllergyNote}
+            onStartOver={handleStartOver}
+          />
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -126,7 +175,7 @@ export default function Home() {
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Submitting..." : "Submit"}
+              {isSubmitting ? <LoadingSpinner /> : "Submit"}
             </button>
           </div>
         </main>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ALLERGENS } from "@/lib/allergens";
+import { ALL_FILTERS } from "@/lib/allergens";
 import AllergenButton from "./AllergenButton";
 
 interface AllergenGridProps {
@@ -14,7 +14,7 @@ export default function AllergenGrid({
 }: AllergenGridProps) {
   return (
     <div className="allergen-grid">
-      {ALLERGENS.map((allergen) => (
+      {ALL_FILTERS.map((allergen) => (
         <AllergenButton
           key={allergen.id}
           allergen={allergen}
