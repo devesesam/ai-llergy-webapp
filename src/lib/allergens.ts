@@ -16,9 +16,10 @@ export const ALLERGENS: Allergen[] = [
   // Tier 2: Most Common (Big 9)
   { id: "peanuts", label: "Peanuts", icon: "🥜", columnName: "PEANUT FREE" },
   { id: "treenuts", label: "Tree Nuts", icon: "🌳", columnName: "TREE NUT FREE" },
-  { id: "eggs", label: "Eggs", icon: "🥚", columnName: "EGG FREE" },
-  { id: "dairy", label: "Dairy", icon: "🥛", columnName: "DAIRY FREE" },
   { id: "gluten", label: "Gluten", icon: "🍞", columnName: "GLUTEN FREE" },
+  { id: "wheat", label: "Wheat", icon: "🌾", columnName: "WHEAT FREE" },
+  { id: "dairy", label: "Dairy", icon: "🥛", columnName: "DAIRY FREE" },
+  { id: "eggs", label: "Eggs", icon: "🥚", columnName: "EGG FREE" },
   { id: "soy", label: "Soy", icon: "🌱", columnName: "SOY FREE" },
   { id: "fish", label: "Fish", icon: "🐟", columnName: "FISH FREE" },
   { id: "shellfish", label: "Shellfish", icon: "🦐", columnName: "SHELLFISH FREE" },
@@ -30,7 +31,6 @@ export const ALLERGENS: Allergen[] = [
   { id: "pistachio", label: "Pistachio", icon: "🟢", columnName: "PISTACHIO FREE" },
 
   // Tier 4: Less Common / Regional
-  { id: "wheat", label: "Wheat", icon: "🌾", columnName: "WHEAT FREE" },
   { id: "mustard", label: "Mustard", icon: "🟡", columnName: "MUSTARD FREE" },
   { id: "sulfites", label: "Sulfites", icon: "🧪", columnName: "SULFITE FREE" },
   { id: "garlic", label: "Garlic", icon: "🧄", columnName: "GARLIC FREE" },

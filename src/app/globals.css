@@ -865,6 +865,17 @@ input[type="text"]:focus {
   color: #b38600;
 }
 
+.selection-summary__label--custom {
+  background: var(--color-accent-seafoam);
+  color: white;
+}
+
+.selection-pill--custom {
+  background: rgba(143, 182, 171, 0.15);
+  border: 1px solid var(--color-accent-seafoam);
+  color: #5a8a7d;
+}
+
 /* ========================================
    Autocomplete Input Component
    ======================================== */

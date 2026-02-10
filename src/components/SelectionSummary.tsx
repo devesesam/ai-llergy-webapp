@@ -4,16 +4,25 @@ import { SelectedAllergen, getAllergenById } from "@/lib/allergens";
 
 interface SelectionSummaryProps {
   selectedAllergens: SelectedAllergen[];
+  customAllergenIds?: string[];
 }
 
 export default function SelectionSummary({
   selectedAllergens,
+  customAllergenIds = [],
 }: SelectionSummaryProps) {
-  if (selectedAllergens.length === 0) {
+  // Filter out custom allergen IDs that are already in selectedAllergens (to avoid duplicates)
+  const selectedIds = new Set(selectedAllergens.map(s => s.id));
+  const uniqueCustomIds = customAllergenIds.filter(id => !selectedIds.has(id));
+
+  // Check if there's anything to display
+  const hasSelections = selectedAllergens.length > 0 || uniqueCustomIds.length > 0;
+
+  if (!hasSelections) {
     return null;
   }
 
-  // Separate allergies and preferences
+  // Separate allergies and preferences from button selections
   const allergies = selectedAllergens.filter(s => s.type === "allergy");
   const preferences = selectedAllergens.filter(s => s.type === "preference");
 
@@ -57,6 +66,29 @@ export default function SelectionSummary({
                 <span
                   key={selection.id}
                   className="selection-pill selection-pill--preference"
+                >
+                  <span className="selection-pill__icon">{allergen.icon}</span>
+                  <span className="selection-pill__label">{allergen.label}</span>
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {uniqueCustomIds.length > 0 && (
+        <div className="selection-summary__group">
+          <span className="selection-summary__label selection-summary__label--custom">
+            Added via Search
+          </span>
+          <div className="selection-summary__pills">
+            {uniqueCustomIds.map(id => {
+              const allergen = getAllergenById(id);
+              if (!allergen) return null;
+              return (
+                <span
+                  key={id}
+                  className="selection-pill selection-pill--custom"
                 >
                   <span className="selection-pill__icon">{allergen.icon}</span>
                   <span className="selection-pill__label">{allergen.label}</span>

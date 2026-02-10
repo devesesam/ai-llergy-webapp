@@ -17,6 +17,7 @@ interface MenuResultsProps {
   cautionItems: MenuItemData[];
   excludedCount: number;
   selectedAllergens: SelectedAllergen[];
+  customAllergenIds?: string[];
   onStartOver: () => void;
 }
 
@@ -25,13 +26,17 @@ export default function MenuResults({
   cautionItems,
   excludedCount,
   selectedAllergens,
+  customAllergenIds = [],
   onStartOver,
 }: MenuResultsProps) {
   const totalSafe = safeItems.length + cautionItems.length;
 
   return (
     <div className="results-container">
-      <SelectionSummary selectedAllergens={selectedAllergens} />
+      <SelectionSummary
+        selectedAllergens={selectedAllergens}
+        customAllergenIds={customAllergenIds}
+      />
 
       <header className="results-header">
         <h2 className="results-title">

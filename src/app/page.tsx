@@ -152,6 +152,7 @@ export default function Home() {
             cautionItems={results.cautionItems}
             excludedCount={results.excludedCount}
             selectedAllergens={selectedAllergens}
+            customAllergenIds={customAllergenIds}
             onStartOver={handleStartOver}
           />
         </div>
