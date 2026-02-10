@@ -209,10 +209,17 @@ export default function Home() {
               className="btn primary-btn full-width"
               onClick={handleSubmit}
               disabled={isSubmitting || hasInputText}
-              title={hasInputText ? "Convert text to tag before submitting" : ""}
             >
               {isSubmitting ? <LoadingSpinner /> : "Submit"}
             </button>
+            {hasInputText && (
+              <div className="submit-helper">
+                <span className="submit-helper__icon">⚠️</span>
+                <span className="submit-helper__text">
+                  Convert your search text to a tag first (select from dropdown or press Enter)
+                </span>
+              </div>
+            )}
           </div>
         </main>
       </div>

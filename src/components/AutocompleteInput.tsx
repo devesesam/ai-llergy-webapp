@@ -170,7 +170,7 @@ export default function AutocompleteInput({
         <input
           ref={inputRef}
           type="text"
-          className="autocomplete-input"
+          className={`autocomplete-input${inputValue.trim() ? " autocomplete-input--blocking" : ""}`}
           placeholder="Type an allergen..."
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}

@@ -1086,3 +1086,49 @@ input[type="text"]:focus {
   opacity: 1;
   background: rgba(30, 30, 30, 0.2);
 }
+
+/* ========================================
+   Submit Button Helper Text
+   ======================================== */
+
+.action-area {
+  position: relative;
+}
+
+.submit-helper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(244, 178, 35, 0.1);
+  border: 1px solid rgba(244, 178, 35, 0.3);
+  border-radius: var(--radius-sm);
+  animation: fadeIn 0.2s ease;
+}
+
+.submit-helper__icon {
+  font-size: 1rem;
+}
+
+.submit-helper__text {
+  font-size: 0.85rem;
+  color: #8a6a00;
+  line-height: 1.4;
+}
+
+/* Pulsing border on input when blocking submit */
+.autocomplete-input--blocking {
+  border-bottom-color: var(--color-accent-saffron) !important;
+  animation: pulseInput 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseInput {
+  0%, 100% {
+    border-bottom-color: var(--color-accent-saffron);
+  }
+  50% {
+    border-bottom-color: rgba(244, 178, 35, 0.4);
+  }
+}
