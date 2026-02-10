@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { AllergenSubmission } from "@/lib/allergens";
+import type { SelectedAllergen } from "@/lib/allergens";
 import { getMenu, getCacheStatus } from "@/lib/menu-service";
 import { filterMenu, formatWarnings, FilteredItem } from "@/lib/filter-menu";
-import { interpretCustomAllergy } from "@/lib/interpret-allergy";
+
+interface SubmissionBody {
+  allergens: SelectedAllergen[];
+  customAllergenIds?: string[];
+}
 
 export interface MenuResponse {
   success: boolean;
@@ -19,12 +23,10 @@ export interface MenuResponse {
     warnings: string[];
   }>;
   excludedCount: number;
-  customAllergyNote?: string;
   meta: {
     totalItems: number;
     allergenFilters: string[];
     cacheStatus: { cached: boolean; age: number };
-    interpretMethod?: "local" | "ai" | "none";
   };
 }
 
@@ -41,8 +43,8 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
 
   try {
-    const body: AllergenSubmission = await request.json();
-    const { allergens, customAllergy } = body;
+    const body: SubmissionBody = await request.json();
+    const { allergens, customAllergenIds } = body;
 
     // Validate input
     if (!Array.isArray(allergens)) {
@@ -52,25 +54,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Combine button selections with custom allergy interpretation
-    let allAllergens = [...allergens];
-    let customAllergyNote: string | undefined;
-    let interpretMethod: "local" | "ai" | "none" = "none";
+    // Extract allergen IDs from the SelectedAllergen objects
+    // The type distinction is for UI only; filtering treats all the same
+    const allergenIds = allergens.map((a: SelectedAllergen) => a.id);
 
-    if (customAllergy && customAllergy.trim()) {
-      const interpretation = await interpretCustomAllergy(customAllergy);
-      interpretMethod = interpretation.method;
+    // Combine button selections with custom allergen IDs (already validated tags)
+    const allAllergens = [...allergenIds];
 
-      // Add matched allergens to the filter list
-      for (const matched of interpretation.matchedAllergens) {
-        if (!allAllergens.includes(matched)) {
-          allAllergens.push(matched);
+    // Add custom allergen IDs (these were validated client-side via autocomplete/AI)
+    if (customAllergenIds && Array.isArray(customAllergenIds)) {
+      for (const id of customAllergenIds) {
+        if (!allAllergens.includes(id)) {
+          allAllergens.push(id);
         }
-      }
-
-      // If some text couldn't be matched, add a note for the user
-      if (interpretation.unmatchedText) {
-        customAllergyNote = `Please ask staff about: ${interpretation.unmatchedText}`;
       }
     }
 
@@ -86,7 +82,6 @@ export async function POST(request: NextRequest) {
       safeItems: result.safeItems.map(formatItem),
       cautionItems: result.cautionItems.map(formatItem),
       excludedCount: result.excludedCount,
-      customAllergyNote,
       meta: {
         totalItems: menu.length,
         allergenFilters: allAllergens,
@@ -94,7 +89,6 @@ export async function POST(request: NextRequest) {
           cached: cacheStatus.cached,
           age: cacheStatus.age,
         },
-        interpretMethod,
       },
     };
 

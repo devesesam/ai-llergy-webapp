@@ -4,8 +4,11 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import DisclaimerModal from "@/components/DisclaimerModal";
 import AllergenGrid from "@/components/AllergenGrid";
+import AllergenTypeModal from "@/components/AllergenTypeModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import MenuResults from "@/components/MenuResults";
+import AutocompleteInput from "@/components/AutocompleteInput";
+import { Allergen, SelectedAllergen } from "@/lib/allergens";
 
 interface MenuItemData {
   name: string;
@@ -18,17 +21,18 @@ interface ResultsData {
   safeItems: MenuItemData[];
   cautionItems: MenuItemData[];
   excludedCount: number;
-  customAllergyNote?: string;
 }
 
 export default function Home() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
-  const [selectedAllergens, setSelectedAllergens] = useState<Set<string>>(
-    new Set()
-  );
-  const [customAllergy, setCustomAllergy] = useState("");
+  const [selectedAllergens, setSelectedAllergens] = useState<SelectedAllergen[]>([]);
+  const [customAllergenIds, setCustomAllergenIds] = useState<string[]>([]);
+  const [hasInputText, setHasInputText] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState<ResultsData | null>(null);
+
+  // Modal state for allergy/preference selection
+  const [modalAllergen, setModalAllergen] = useState<Allergen | null>(null);
 
   useEffect(() => {
     // Show disclaimer modal after a short delay
@@ -38,22 +42,43 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleToggleAllergen = (id: string) => {
-    setSelectedAllergens((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
+  // Handle allergen click - either remove if selected, or open modal
+  const handleAllergenClick = (allergen: Allergen) => {
+    const existingIndex = selectedAllergens.findIndex(s => s.id === allergen.id);
+
+    if (existingIndex !== -1) {
+      // Already selected - remove it
+      setSelectedAllergens(prev => prev.filter(s => s.id !== allergen.id));
+    } else {
+      // Not selected - open modal to choose type
+      setModalAllergen(allergen);
+    }
+  };
+
+  // Handle type selection from modal
+  const handleTypeSelect = (type: "allergy" | "preference") => {
+    if (modalAllergen) {
+      setSelectedAllergens(prev => [...prev, { id: modalAllergen.id, type }]);
+      setModalAllergen(null);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalAllergen(null);
+  };
+
+  const handleAddCustomAllergen = (id: string) => {
+    if (!customAllergenIds.includes(id)) {
+      setCustomAllergenIds((prev) => [...prev, id]);
+    }
+  };
+
+  const handleRemoveCustomAllergen = (id: string) => {
+    setCustomAllergenIds((prev) => prev.filter((i) => i !== id));
   };
 
   const handleSubmit = async () => {
-    const allergenList = Array.from(selectedAllergens);
-
-    if (allergenList.length === 0 && !customAllergy.trim()) {
+    if (selectedAllergens.length === 0 && customAllergenIds.length === 0) {
       alert(
         "No allergens selected! Please select at least one or type a custom one if you have specific needs."
       );
@@ -69,8 +94,8 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          allergens: allergenList,
-          customAllergy: customAllergy.trim() || undefined,
+          allergens: selectedAllergens,
+          customAllergenIds: customAllergenIds,
         }),
       });
 
@@ -85,7 +110,6 @@ export default function Home() {
         safeItems: data.safeItems,
         cautionItems: data.cautionItems,
         excludedCount: data.excludedCount,
-        customAllergyNote: data.customAllergyNote,
       });
     } catch (error) {
       console.error("Submission error:", error);
@@ -97,8 +121,9 @@ export default function Home() {
 
   const handleStartOver = () => {
     setResults(null);
-    setSelectedAllergens(new Set());
-    setCustomAllergy("");
+    setSelectedAllergens([]);
+    setCustomAllergenIds([]);
+    setHasInputText(false);
   };
 
   // Show results view if we have results
@@ -126,7 +151,7 @@ export default function Home() {
             safeItems={results.safeItems}
             cautionItems={results.cautionItems}
             excludedCount={results.excludedCount}
-            customAllergyNote={results.customAllergyNote}
+            selectedAllergens={selectedAllergens}
             onStartOver={handleStartOver}
           />
         </div>
@@ -140,6 +165,15 @@ export default function Home() {
         isOpen={showDisclaimer}
         onAgree={() => setShowDisclaimer(false)}
       />
+
+      {modalAllergen && (
+        <AllergenTypeModal
+          allergen={modalAllergen}
+          isOpen={true}
+          onSelect={handleTypeSelect}
+          onClose={handleCloseModal}
+        />
+      )}
 
       <div className="app-container">
         <header>
@@ -157,15 +191,15 @@ export default function Home() {
         <main>
           <AllergenGrid
             selectedAllergens={selectedAllergens}
-            onToggle={handleToggleAllergen}
+            onAllergenClick={handleAllergenClick}
           />
 
           <div className="input-group">
-            <input
-              type="text"
-              placeholder="Add specific allergies or preferences..."
-              value={customAllergy}
-              onChange={(e) => setCustomAllergy(e.target.value)}
+            <AutocompleteInput
+              selectedAllergenIds={customAllergenIds}
+              onAllergenAdd={handleAddCustomAllergen}
+              onAllergenRemove={handleRemoveCustomAllergen}
+              onInputChange={setHasInputText}
             />
           </div>
 
@@ -173,7 +207,8 @@ export default function Home() {
             <button
               className="btn primary-btn full-width"
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || hasInputText}
+              title={hasInputText ? "Convert text to tag before submitting" : ""}
             >
               {isSubmitting ? <LoadingSpinner /> : "Submit"}
             </button>

@@ -50,7 +50,43 @@ export const ALLERGEN_TO_COLUMN: Record<string, string> = Object.fromEntries(
   ALL_FILTERS.map((a) => [a.id, a.columnName])
 );
 
-export interface AllergenSubmission {
-  allergens: string[];
-  customAllergy?: string;
+// Selected allergen with type distinction
+export interface SelectedAllergen {
+  id: string;
+  type: "allergy" | "preference";
 }
+
+export interface AllergenSubmission {
+  allergens: SelectedAllergen[];
+  customAllergenIds?: string[];
+}
+
+// Allergen group definition
+export interface AllergenGroup {
+  id: string;
+  label: string;
+  icon: string;
+  members: string[]; // Allergen IDs
+}
+
+// Groups for collapsible UI
+export const ALLERGEN_GROUPS: AllergenGroup[] = [
+  { id: "nuts", label: "Nuts", icon: "🥜", members: ["peanuts", "treenuts", "almond", "walnut", "pistachio"] },
+  { id: "seafood", label: "Seafood", icon: "🦐", members: ["fish", "shellfish", "molluscs"] },
+  { id: "aromatics", label: "Aromatics", icon: "🧄", members: ["garlic", "onion", "celery"] },
+  { id: "spicy", label: "Spicy", icon: "🌶️", members: ["chili", "capsicum"] },
+];
+
+// Get all allergen IDs that belong to groups
+export const GROUPED_ALLERGEN_IDS = new Set(
+  ALLERGEN_GROUPS.flatMap(g => g.members)
+);
+
+// Get allergens that are NOT in any group (standalone)
+export const STANDALONE_ALLERGENS = ALLERGENS.filter(
+  a => !GROUPED_ALLERGEN_IDS.has(a.id)
+);
+
+// Helper to get allergen by ID
+export const getAllergenById = (id: string): Allergen | undefined =>
+  ALL_FILTERS.find(a => a.id === id);

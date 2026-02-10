@@ -2,6 +2,8 @@
 
 import AccordionSection from "./AccordionSection";
 import MenuItem from "./MenuItem";
+import SelectionSummary from "./SelectionSummary";
+import { SelectedAllergen } from "@/lib/allergens";
 
 interface MenuItemData {
   name: string;
@@ -14,7 +16,7 @@ interface MenuResultsProps {
   safeItems: MenuItemData[];
   cautionItems: MenuItemData[];
   excludedCount: number;
-  customAllergyNote?: string;
+  selectedAllergens: SelectedAllergen[];
   onStartOver: () => void;
 }
 
@@ -22,13 +24,15 @@ export default function MenuResults({
   safeItems,
   cautionItems,
   excludedCount,
-  customAllergyNote,
+  selectedAllergens,
   onStartOver,
 }: MenuResultsProps) {
   const totalSafe = safeItems.length + cautionItems.length;
 
   return (
     <div className="results-container">
+      <SelectionSummary selectedAllergens={selectedAllergens} />
+
       <header className="results-header">
         <h2 className="results-title">
           {totalSafe > 0
@@ -84,13 +88,6 @@ export default function MenuResults({
           {excludedCount} item{excludedCount !== 1 ? "s" : ""} excluded based on
           your selections
         </p>
-      )}
-
-      {customAllergyNote && (
-        <div className="results-note">
-          <span className="results-note__icon">i</span>
-          <p>{customAllergyNote}</p>
-        </div>
       )}
 
       <div className="action-area">
