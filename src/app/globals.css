@@ -426,6 +426,7 @@ input[type="text"]:focus {
 .accordion__content--open {
   max-height: 2000px;
   padding-top: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
 }
 
 /* Menu Item */
@@ -514,7 +515,7 @@ input[type="text"]:focus {
 }
 
 .menu-item__ingredients-wrapper--open {
-  max-height: 200px;
+  max-height: 500px;
   padding-top: var(--spacing-xs);
 }
 
