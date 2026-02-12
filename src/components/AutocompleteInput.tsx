@@ -28,26 +28,23 @@ export default function AutocompleteInput({
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showAskAI, setShowAskAI] = useState(false);
-  const [isAILoading, setIsAILoading] = useState(false);
-  const [aiError, setAIError] = useState<string | null>(null);
+  const [showAddCustom, setShowAddCustom] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const askAITimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const noMatchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Debounced search
   useEffect(() => {
-    // Clear previous "Ask AI" timeout
-    if (askAITimeoutRef.current) {
-      clearTimeout(askAITimeoutRef.current);
-      askAITimeoutRef.current = null;
+    // Clear previous timeout
+    if (noMatchTimeoutRef.current) {
+      clearTimeout(noMatchTimeoutRef.current);
+      noMatchTimeoutRef.current = null;
     }
 
     if (!inputValue.trim()) {
       setSuggestions([]);
       setShowDropdown(false);
-      setShowAskAI(false);
-      setAIError(null);
+      setShowAddCustom(false);
       onInputChange(false);
       return;
     }
@@ -64,19 +61,18 @@ export default function AutocompleteInput({
 
     setSuggestions(filteredResults);
     setShowDropdown(true);
-    setShowAskAI(false);
-    setAIError(null);
+    setShowAddCustom(false);
 
-    // If no suggestions, show "Ask AI" button after 500ms
+    // If no suggestions, show "Add as custom" option after 500ms
     if (filteredResults.length === 0) {
-      askAITimeoutRef.current = setTimeout(() => {
-        setShowAskAI(true);
+      noMatchTimeoutRef.current = setTimeout(() => {
+        setShowAddCustom(true);
       }, 500);
     }
 
     return () => {
-      if (askAITimeoutRef.current) {
-        clearTimeout(askAITimeoutRef.current);
+      if (noMatchTimeoutRef.current) {
+        clearTimeout(noMatchTimeoutRef.current);
       }
     };
   }, [inputValue, selectedAllergenIds, onInputChange]);
@@ -104,60 +100,21 @@ export default function AutocompleteInput({
       setInputValue("");
       setSuggestions([]);
       setShowDropdown(false);
-      setShowAskAI(false);
+      setShowAddCustom(false);
       inputRef.current?.focus();
     },
     [onAllergenAdd]
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && suggestions.length === 1) {
+    if (e.key === "Enter") {
       e.preventDefault();
-      handleSelect(suggestions[0].allergenId);
-    }
-  };
-
-  const handleAskAI = async () => {
-    if (!inputValue.trim() || isAILoading) return;
-
-    setIsAILoading(true);
-    setAIError(null);
-
-    try {
-      const response = await fetch("/api/interpret", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: inputValue.trim() }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to interpret");
+      if (suggestions.length === 1) {
+        handleSelect(suggestions[0].allergenId);
+      } else if (suggestions.length === 0 && showAddCustom) {
+        // Allow Enter to add custom tag when no matches
+        handleAddCustomTag();
       }
-
-      const data = await response.json();
-
-      if (data.matchedAllergens && data.matchedAllergens.length > 0) {
-        // Add all matched allergens
-        for (const id of data.matchedAllergens) {
-          if (!selectedAllergenIds.includes(id)) {
-            onAllergenAdd(id);
-          }
-        }
-        setInputValue("");
-        setShowDropdown(false);
-        setShowAskAI(false);
-      } else {
-        // AI couldn't match - show error message
-        setAIError(
-          `"${inputValue}" not recognized. Please ask staff about this ingredient.`
-        );
-        setShowAskAI(false);
-      }
-    } catch (error) {
-      console.error("AI interpretation error:", error);
-      setAIError("Failed to interpret. Please try again.");
-    } finally {
-      setIsAILoading(false);
     }
   };
 
@@ -174,7 +131,7 @@ export default function AutocompleteInput({
     onCustomTagAdd(newTag);
     setInputValue("");
     setShowDropdown(false);
-    setAIError(null);
+    setShowAddCustom(false);
     onInputChange(false);
     inputRef.current?.focus();
   };
@@ -207,7 +164,7 @@ export default function AutocompleteInput({
         />
 
         {/* Dropdown */}
-        {showDropdown && (suggestions.length > 0 || showAskAI || aiError) && (
+        {showDropdown && (suggestions.length > 0 || showAddCustom) && (
           <div ref={dropdownRef} className="autocomplete-dropdown">
             {suggestions.length > 0 ? (
               suggestions.slice(0, 5).map((result) => {
@@ -236,30 +193,17 @@ export default function AutocompleteInput({
                   </button>
                 );
               })
-            ) : showAskAI ? (
+            ) : showAddCustom ? (
               <div className="autocomplete-no-match">
                 <span className="autocomplete-no-match__text">
-                  No matches found.
+                  No matches found for &quot;{inputValue}&quot;
                 </span>
-                <button
-                  type="button"
-                  className="autocomplete-ask-ai"
-                  onClick={handleAskAI}
-                  disabled={isAILoading}
-                >
-                  {isAILoading ? "Checking..." : "🤖 Ask AI"}
-                </button>
-              </div>
-            ) : aiError ? (
-              <div className="autocomplete-error">
-                <span className="autocomplete-error__icon">⚠️</span>
-                <span className="autocomplete-error__text">{aiError}</span>
                 <button
                   type="button"
                   className="autocomplete-add-custom"
                   onClick={handleAddCustomTag}
                 >
-                  + Add &quot;{inputValue}&quot; as custom restriction
+                  🏷️ Add as custom restriction
                 </button>
               </div>
             ) : null}

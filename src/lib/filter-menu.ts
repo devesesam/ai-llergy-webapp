@@ -56,6 +56,12 @@ export function filterMenu(menu: MenuItem[], selectedAllergens: string[]): Filte
 
       const value = item.allergenProfile[columnName];
 
+      // If column doesn't exist in sheet, value is undefined
+      // Skip this allergen - it will be handled by AI filtering in route.ts
+      if (value === undefined) {
+        continue;
+      }
+
       if (value === "NO") {
         // Item is NOT safe for this allergen
         isExcluded = true;

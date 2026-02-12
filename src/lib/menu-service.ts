@@ -20,14 +20,46 @@ const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 let menuCache: MenuItem[] | null = null;
 let cacheTimestamp: number = 0;
 
+// Track which allergen columns actually exist in the Google Sheet
+// This is populated during menu fetch and used to determine hybrid filtering
+let availableColumns: Set<string> = new Set();
+
+/**
+ * Detect which allergen columns exist in the sheet
+ * A column "exists" if any item has a non-empty value for it
+ */
+function detectAvailableColumns(rawItems: RawMenuItem[]): Set<string> {
+  const columns = new Set<string>();
+
+  for (const raw of rawItems) {
+    for (const allergen of ALL_FILTERS) {
+      const col = allergen.columnName;
+      const value = raw[col]?.trim();
+      if (value && value !== "") {
+        columns.add(col);
+      }
+    }
+  }
+
+  return columns;
+}
+
 /**
  * Transform raw sheet data into structured MenuItem
+ * Only adds columns that exist in the sheet (availableColumns)
+ * Missing columns are NOT added (undefined), not defaulted to "NO"
  */
 function transformMenuItem(raw: RawMenuItem): MenuItem {
   const allergenProfile: Record<string, "YES" | "NO" | "CAN BE"> = {};
 
   for (const allergen of ALL_FILTERS) {
     const col = allergen.columnName;
+
+    // Only process columns that exist in the sheet
+    if (!availableColumns.has(col)) {
+      continue; // Skip - column doesn't exist, will be handled by AI
+    }
+
     const value = raw[col]?.toUpperCase().trim() || "";
     if (value === "YES") {
       allergenProfile[col] = "YES";
@@ -63,6 +95,11 @@ export async function getMenu(): Promise<MenuItem[]> {
   }
 
   const rawItems = await fetchMenuFromSheets();
+
+  // Detect which columns exist in the sheet BEFORE transforming items
+  availableColumns = detectAvailableColumns(rawItems);
+  console.log("[menu-service] Available columns:", Array.from(availableColumns));
+
   menuCache = rawItems.map(transformMenuItem).filter((item) => item.name); // Filter out empty items
   cacheTimestamp = Date.now();
 
@@ -75,6 +112,7 @@ export async function getMenu(): Promise<MenuItem[]> {
 export async function refreshMenu(): Promise<MenuItem[]> {
   menuCache = null;
   cacheTimestamp = 0;
+  availableColumns = new Set();
   return getMenu();
 }
 
@@ -87,4 +125,12 @@ export function getCacheStatus(): { cached: boolean; age: number; itemCount: num
     age: menuCache ? Date.now() - cacheTimestamp : 0,
     itemCount: menuCache?.length || 0,
   };
+}
+
+/**
+ * Get the set of allergen columns that exist in the Google Sheet
+ * Used by route.ts to determine which allergens need AI filtering
+ */
+export function getAvailableColumns(): Set<string> {
+  return availableColumns;
 }
