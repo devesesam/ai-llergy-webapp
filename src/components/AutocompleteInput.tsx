@@ -2,14 +2,18 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { searchSynonyms, SearchResult } from "@/lib/interpret-allergy";
-import { getAllergenById } from "@/lib/allergens";
+import { getAllergenById, CustomTag } from "@/lib/allergens";
 import AllergenTag from "./AllergenTag";
+import CustomTagPill from "./CustomTagPill";
 
 interface AutocompleteInputProps {
   selectedAllergenIds: string[];
   onAllergenAdd: (id: string) => void;
   onAllergenRemove: (id: string) => void;
   onInputChange: (hasText: boolean) => void;
+  customTags: CustomTag[];
+  onCustomTagAdd: (tag: CustomTag) => void;
+  onCustomTagRemove: (tagId: string) => void;
 }
 
 export default function AutocompleteInput({
@@ -17,6 +21,9 @@ export default function AutocompleteInput({
   onAllergenAdd,
   onAllergenRemove,
   onInputChange,
+  customTags,
+  onCustomTagAdd,
+  onCustomTagRemove,
 }: AutocompleteInputProps) {
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
@@ -154,13 +161,34 @@ export default function AutocompleteInput({
     }
   };
 
+  const handleAddCustomTag = () => {
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+
+    const newTag: CustomTag = {
+      id: `custom_${trimmed.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`,
+      text: trimmed,
+      displayLabel: trimmed.charAt(0).toUpperCase() + trimmed.slice(1),
+    };
+
+    onCustomTagAdd(newTag);
+    setInputValue("");
+    setShowDropdown(false);
+    setAIError(null);
+    onInputChange(false);
+    inputRef.current?.focus();
+  };
+
   return (
     <div className="autocomplete-container">
       {/* Selected tags */}
-      {selectedAllergenIds.length > 0 && (
+      {(selectedAllergenIds.length > 0 || customTags.length > 0) && (
         <div className="autocomplete-tags">
           {selectedAllergenIds.map((id) => (
             <AllergenTag key={id} allergenId={id} onRemove={onAllergenRemove} />
+          ))}
+          {customTags.map((tag) => (
+            <CustomTagPill key={tag.id} tag={tag} onRemove={onCustomTagRemove} />
           ))}
         </div>
       )}
@@ -226,6 +254,13 @@ export default function AutocompleteInput({
               <div className="autocomplete-error">
                 <span className="autocomplete-error__icon">⚠️</span>
                 <span className="autocomplete-error__text">{aiError}</span>
+                <button
+                  type="button"
+                  className="autocomplete-add-custom"
+                  onClick={handleAddCustomTag}
+                >
+                  + Add &quot;{inputValue}&quot; as custom restriction
+                </button>
               </div>
             ) : null}
           </div>

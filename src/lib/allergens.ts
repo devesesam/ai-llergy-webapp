@@ -59,6 +59,14 @@ export interface SelectedAllergen {
 export interface AllergenSubmission {
   allergens: SelectedAllergen[];
   customAllergenIds?: string[];
+  customTags?: CustomTag[];
+}
+
+// Custom tag for free-form text restrictions (not mapped to known allergens)
+export interface CustomTag {
+  id: string;           // Generated unique ID (e.g., "custom_cucumber_1234")
+  text: string;         // Original user text
+  displayLabel: string; // Formatted for display (capitalized)
 }
 
 // Allergen group definition

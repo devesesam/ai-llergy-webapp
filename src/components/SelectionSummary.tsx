@@ -1,22 +1,24 @@
 "use client";
 
-import { SelectedAllergen, getAllergenById } from "@/lib/allergens";
+import { SelectedAllergen, getAllergenById, CustomTag } from "@/lib/allergens";
 
 interface SelectionSummaryProps {
   selectedAllergens: SelectedAllergen[];
   customAllergenIds?: string[];
+  customTags?: CustomTag[];
 }
 
 export default function SelectionSummary({
   selectedAllergens,
   customAllergenIds = [],
+  customTags = [],
 }: SelectionSummaryProps) {
   // Filter out custom allergen IDs that are already in selectedAllergens (to avoid duplicates)
   const selectedIds = new Set(selectedAllergens.map(s => s.id));
   const uniqueCustomIds = customAllergenIds.filter(id => !selectedIds.has(id));
 
   // Check if there's anything to display
-  const hasSelections = selectedAllergens.length > 0 || uniqueCustomIds.length > 0;
+  const hasSelections = selectedAllergens.length > 0 || uniqueCustomIds.length > 0 || customTags.length > 0;
 
   if (!hasSelections) {
     return null;
@@ -95,6 +97,25 @@ export default function SelectionSummary({
                 </span>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {customTags.length > 0 && (
+        <div className="selection-summary__group">
+          <span className="selection-summary__label selection-summary__label--custom-tag">
+            Custom Restrictions
+          </span>
+          <div className="selection-summary__pills">
+            {customTags.map(tag => (
+              <span
+                key={tag.id}
+                className="selection-pill selection-pill--custom-tag"
+              >
+                <span className="selection-pill__icon">🏷️</span>
+                <span className="selection-pill__label">{tag.displayLabel}</span>
+              </span>
+            ))}
           </div>
         </div>
       )}

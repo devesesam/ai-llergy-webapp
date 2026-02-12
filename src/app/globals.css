@@ -472,6 +472,52 @@ input[type="text"]:focus {
   margin-left: var(--spacing-sm);
 }
 
+.menu-item__header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+.menu-item__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid rgba(30, 30, 30, 0.15);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 300;
+  color: var(--color-text);
+  opacity: 0.6;
+  transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+  transform: rotate(90deg);
+}
+
+.menu-item__toggle:hover {
+  opacity: 1;
+  background: rgba(30, 30, 30, 0.05);
+}
+
+.menu-item__toggle--open {
+  transform: rotate(-90deg);
+}
+
+.menu-item__ingredients-wrapper {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.menu-item__ingredients-wrapper--open {
+  max-height: 200px;
+  padding-top: var(--spacing-xs);
+}
+
 .menu-item__ingredients {
   font-size: 0.85rem;
   opacity: 0.65;
@@ -876,6 +922,17 @@ input[type="text"]:focus {
   color: #5a8a7d;
 }
 
+.selection-summary__label--custom-tag {
+  background: #6b7280;
+  color: white;
+}
+
+.selection-pill--custom-tag {
+  background: rgba(107, 114, 128, 0.1);
+  border: 1px solid #6b7280;
+  color: #4b5563;
+}
+
 /* ========================================
    Autocomplete Input Component
    ======================================== */
@@ -1017,10 +1074,12 @@ input[type="text"]:focus {
 
 .autocomplete-error {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: var(--spacing-xs);
   padding: var(--spacing-sm) var(--spacing-md);
   background: rgba(244, 178, 35, 0.1);
+  text-align: center;
 }
 
 .autocomplete-error__icon {
@@ -1031,6 +1090,26 @@ input[type="text"]:focus {
   font-size: 0.85rem;
   color: #8a6a00;
   line-height: 1.4;
+}
+
+.autocomplete-add-custom {
+  width: 100%;
+  padding: 10px 16px;
+  margin-top: var(--spacing-xs);
+  background: rgba(107, 114, 128, 0.1);
+  color: #4b5563;
+  border: 1px dashed #6b7280;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.autocomplete-add-custom:hover {
+  background: rgba(107, 114, 128, 0.2);
+  border-color: #4b5563;
 }
 
 .autocomplete-helper {
@@ -1083,6 +1162,53 @@ input[type="text"]:focus {
 }
 
 .allergen-tag__remove:hover {
+  opacity: 1;
+  background: rgba(30, 30, 30, 0.2);
+}
+
+/* Custom Tag (for free-form text restrictions) */
+.custom-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(107, 114, 128, 0.1);
+  border: 1px solid #6b7280;
+  border-radius: var(--radius-btn);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.custom-tag__icon {
+  font-size: 1rem;
+}
+
+.custom-tag__label {
+  color: inherit;
+}
+
+.custom-tag__remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  padding: 0;
+  background: rgba(30, 30, 30, 0.1);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-text);
+  opacity: 0.6;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.custom-tag__remove:hover {
   opacity: 1;
   background: rgba(30, 30, 30, 0.2);
 }

@@ -4,6 +4,7 @@
  */
 
 import { fetchMenuFromSheets, RawMenuItem } from "./google-sheets";
+import { ALL_FILTERS } from "./allergens";
 
 export interface MenuItem {
   name: string;
@@ -23,25 +24,10 @@ let cacheTimestamp: number = 0;
  * Transform raw sheet data into structured MenuItem
  */
 function transformMenuItem(raw: RawMenuItem): MenuItem {
-  const allergenColumns = [
-    "Vegetarian",
-    "Vegan",
-    "DAIRY FREE",
-    "PISTACHIO FREE",
-    "WALNUT FREE",
-    "ALMOND FREE",
-    "SOY FREE",
-    "GLUTEN FREE",
-    "SESAME FREE",
-    "GARLIC FREE",
-    "ONION FREE",
-    "CAPSICUM FREE",
-    "CHILI FREE",
-  ];
-
   const allergenProfile: Record<string, "YES" | "NO" | "CAN BE"> = {};
 
-  for (const col of allergenColumns) {
+  for (const allergen of ALL_FILTERS) {
+    const col = allergen.columnName;
     const value = raw[col]?.toUpperCase().trim() || "";
     if (value === "YES") {
       allergenProfile[col] = "YES";

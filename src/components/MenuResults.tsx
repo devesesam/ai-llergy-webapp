@@ -3,7 +3,7 @@
 import AccordionSection from "./AccordionSection";
 import MenuItem from "./MenuItem";
 import SelectionSummary from "./SelectionSummary";
-import { SelectedAllergen } from "@/lib/allergens";
+import { SelectedAllergen, CustomTag } from "@/lib/allergens";
 
 interface MenuItemData {
   name: string;
@@ -18,6 +18,7 @@ interface MenuResultsProps {
   excludedCount: number;
   selectedAllergens: SelectedAllergen[];
   customAllergenIds?: string[];
+  customTags?: CustomTag[];
   onStartOver: () => void;
 }
 
@@ -27,6 +28,7 @@ export default function MenuResults({
   excludedCount,
   selectedAllergens,
   customAllergenIds = [],
+  customTags = [],
   onStartOver,
 }: MenuResultsProps) {
   const totalSafe = safeItems.length + cautionItems.length;
@@ -36,6 +38,7 @@ export default function MenuResults({
       <SelectionSummary
         selectedAllergens={selectedAllergens}
         customAllergenIds={customAllergenIds}
+        customTags={customTags}
       />
 
       <header className="results-header">

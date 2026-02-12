@@ -8,7 +8,7 @@ import AllergenTypeModal from "@/components/AllergenTypeModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import MenuResults from "@/components/MenuResults";
 import AutocompleteInput from "@/components/AutocompleteInput";
-import { Allergen, SelectedAllergen } from "@/lib/allergens";
+import { Allergen, SelectedAllergen, CustomTag } from "@/lib/allergens";
 
 interface MenuItemData {
   name: string;
@@ -27,6 +27,7 @@ export default function Home() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [selectedAllergens, setSelectedAllergens] = useState<SelectedAllergen[]>([]);
   const [customAllergenIds, setCustomAllergenIds] = useState<string[]>([]);
+  const [customTags, setCustomTags] = useState<CustomTag[]>([]);
   const [hasInputText, setHasInputText] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState<ResultsData | null>(null);
@@ -77,8 +78,19 @@ export default function Home() {
     setCustomAllergenIds((prev) => prev.filter((i) => i !== id));
   };
 
+  const handleAddCustomTag = (tag: CustomTag) => {
+    // Prevent duplicates by text
+    if (!customTags.some(t => t.text.toLowerCase() === tag.text.toLowerCase())) {
+      setCustomTags(prev => [...prev, tag]);
+    }
+  };
+
+  const handleRemoveCustomTag = (tagId: string) => {
+    setCustomTags(prev => prev.filter(t => t.id !== tagId));
+  };
+
   const handleSubmit = async () => {
-    if (selectedAllergens.length === 0 && customAllergenIds.length === 0) {
+    if (selectedAllergens.length === 0 && customAllergenIds.length === 0 && customTags.length === 0) {
       alert(
         "No allergens selected! Please select at least one or type a custom one if you have specific needs."
       );
@@ -96,6 +108,7 @@ export default function Home() {
         body: JSON.stringify({
           allergens: selectedAllergens,
           customAllergenIds: customAllergenIds,
+          customTags: customTags,
         }),
       });
 
@@ -123,6 +136,7 @@ export default function Home() {
     setResults(null);
     setSelectedAllergens([]);
     setCustomAllergenIds([]);
+    setCustomTags([]);
     setHasInputText(false);
   };
 
@@ -153,6 +167,7 @@ export default function Home() {
             excludedCount={results.excludedCount}
             selectedAllergens={selectedAllergens}
             customAllergenIds={customAllergenIds}
+            customTags={customTags}
             onStartOver={handleStartOver}
           />
         </div>
@@ -201,6 +216,9 @@ export default function Home() {
               onAllergenAdd={handleAddCustomAllergen}
               onAllergenRemove={handleRemoveCustomAllergen}
               onInputChange={setHasInputText}
+              customTags={customTags}
+              onCustomTagAdd={handleAddCustomTag}
+              onCustomTagRemove={handleRemoveCustomTag}
             />
           </div>
 
