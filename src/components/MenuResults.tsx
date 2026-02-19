@@ -74,7 +74,7 @@ export default function MenuResults({
 
       {cautionItems.length > 0 && (
         <AccordionSection
-          title="Can Be Modified"
+          title="Modification Suggestions - Subject to kitchen approval"
           count={cautionItems.length}
           variant="caution"
           defaultOpen={false}

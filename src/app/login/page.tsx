@@ -3,11 +3,10 @@ import LoginForm from './LoginForm'
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-800 via-gray-950 to-black">
+    <div className="auth-page">
       <Suspense fallback={
-        <div className="flex flex-col items-center justify-center text-white/50">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2" />
-          <p className="text-sm font-medium">Loading...</p>
+        <div className="auth-card" style={{ textAlign: 'center', padding: '3rem' }}>
+          <p style={{ color: 'var(--color-text-muted)' }}>Loading...</p>
         </div>
       }>
         <LoginForm />

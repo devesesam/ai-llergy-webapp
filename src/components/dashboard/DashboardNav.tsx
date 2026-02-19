@@ -42,78 +42,72 @@ export default function DashboardNav({ user, venues }: DashboardNavProps) {
   return (
     <>
       {/* Mobile header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-surface border-b border-light">
+      <header className="dashboard-mobile-header">
         <button
-          className="text-2xl text-text-muted"
+          className="dashboard-mobile-header__toggle"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? '✕' : '☰'}
         </button>
-        <span className="text-xl font-heading text-primary">VenuePro</span>
-        <div className="w-8" /> {/* Spacer */}
+        <span className="dashboard-mobile-header__brand">AI-llergy</span>
+        <div style={{ width: '2rem' }} />
       </header>
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 bottom-0 left-0 z-40 w-72 bg-surface border-r border-light transform transition-transform duration-300 md:translate-x-0 md:static md:h-screen flex flex-col min-h-screen shadow-sm ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-8 border-b border-light">
-          <h2 className="text-2xl font-heading text-text mb-1">VenuePro</h2>
-          <p className="text-xs text-text-muted truncate">{user.email}</p>
+      <aside className={`dashboard-sidebar ${mobileMenuOpen ? 'dashboard-sidebar--open' : ''}`}>
+        <div className="dashboard-sidebar__header">
+          <h2 className="dashboard-sidebar__brand">AI-llergy</h2>
+          <p className="dashboard-sidebar__user">{user.email}</p>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-8">
+        <nav className="dashboard-sidebar__nav">
           {/* Main Navigation */}
-          <div className="space-y-1">
-            <p className="px-4 text-xs font-bold text-text-muted uppercase tracking-widest mb-2">Menu</p>
+          <div className="dashboard-sidebar__section">
+            <p className="dashboard-sidebar__section-title">Menu</p>
             {navItems.map(item => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${pathname === item.href
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-text-muted hover:text-text hover:bg-black/5'
-                  }`}
+                className={`dashboard-sidebar__link ${pathname === item.href ? 'dashboard-sidebar__link--active' : ''}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span className="text-lg">{item.icon}</span>
-                <span className="font-medium">{item.label}</span>
+                <span className="dashboard-sidebar__link-icon">{item.icon}</span>
+                <span>{item.label}</span>
               </Link>
             ))}
           </div>
 
           {/* Venues List */}
           {venues.length > 0 && (
-            <div className="space-y-1">
-              <div className="flex items-center justify-between px-4 mb-2">
-                <p className="text-xs font-bold text-text-muted uppercase tracking-widest">Your Venues</p>
-                <Link href="/dashboard/venues/new" className="text-xs text-primary hover:text-primary-hover font-medium">+ Add</Link>
+            <div className="dashboard-sidebar__section">
+              <div className="dashboard-sidebar__section-header">
+                <p className="dashboard-sidebar__section-title">Your Venues</p>
+                <Link href="/dashboard/venues/new" className="dashboard-sidebar__add-link">+ Add</Link>
               </div>
 
               {venues.map(venue => (
                 <Link
                   key={venue.id}
                   href={`/dashboard/venues/${venue.id}`}
-                  className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${pathname.includes(venue.id)
-                    ? 'bg-primary/10 text-primary border border-primary/20'
-                    : 'text-text-muted hover:text-text hover:bg-black/5'
-                    }`}
+                  className={`dashboard-sidebar__link ${pathname.includes(venue.id) ? 'dashboard-sidebar__link--active' : ''}`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <span className="truncate font-medium">{venue.name}</span>
-                  {activeVenue?.id === venue.id && <span className="w-2 h-2 rounded-full bg-primary shadow-sm"></span>}
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{venue.name}</span>
+                  {activeVenue?.id === venue.id && <span className="dashboard-sidebar__active-dot"></span>}
                 </Link>
               ))}
             </div>
           )}
         </nav>
 
-        <div className="p-4 border-t border-light mt-auto">
+        <div className="dashboard-sidebar__footer">
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-3 w-full px-4 py-3 text-text-muted hover:text-text hover:bg-red-500/10 hover:text-red-600 rounded-xl transition-all"
+            className="dashboard-sidebar__signout"
           >
             <span>🚪</span>
-            <span className="font-medium">Sign Out</span>
+            <span>Sign Out</span>
           </button>
         </div>
       </aside>
@@ -121,7 +115,7 @@ export default function DashboardNav({ user, venues }: DashboardNavProps) {
       {/* Mobile overlay */}
       {mobileMenuOpen && (
         <button
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 md:hidden cursor-default w-full h-full border-none p-0"
+          className="dashboard-overlay"
           onClick={() => setMobileMenuOpen(false)}
           aria-label="Close menu"
         />

@@ -53,35 +53,35 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-md p-8 bg-surface/50 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl">
-      <header className="text-center mb-8">
-        <h1 className="text-3xl font-heading font-medium text-white mb-2">
+    <div className="auth-card">
+      <header className="auth-card__header">
+        <h1 className="auth-card__title">
           {isSignUp ? 'Join VenuePro' : 'Welcome Back'}
         </h1>
-        <p className="text-white/60 text-sm">
+        <p className="auth-card__subtitle">
           {isSignUp ? 'Create your premium venue account' : 'Sign in to access your dashboard'}
         </p>
       </header>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <div className="space-y-1">
-          <label className="text-xs font-semibold text-white/40 uppercase tracking-wider ml-1">Email</label>
+      <form onSubmit={handleSubmit} className="auth-form">
+        <div className="auth-form__group">
+          <label className="auth-form__label">Email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+            className="auth-form__input"
             placeholder="name@venue.com"
           />
         </div>
 
-        <div className="space-y-1">
-          <div className="flex justify-between items-center ml-1">
-            <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">Password</label>
+        <div className="auth-form__group">
+          <div className="auth-form__label-row">
+            <label className="auth-form__label">Password</label>
             {!isSignUp && (
-              <Link href="/forgot-password" className="text-xs text-primary hover:text-primary-hover transition-colors">
+              <Link href="/forgot-password" className="auth-form__forgot">
                 Forgot?
               </Link>
             )}
@@ -93,39 +93,39 @@ export default function LoginForm() {
             required
             minLength={6}
             disabled={loading}
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+            className="auth-form__input"
             placeholder="••••••••"
           />
         </div>
 
         {error && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-200 text-sm text-center">
+          <div className="auth-form__error">
             {error}
           </div>
         )}
 
         {message && (
-          <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-200 text-sm text-center">
+          <div className="auth-form__success">
             {message}
           </div>
         )}
 
         <button
           type="submit"
-          className="w-full py-4 mt-2 bg-gradient-to-r from-primary to-amber-500 text-black font-bold uppercase tracking-wide rounded-xl hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+          className="auth-form__submit"
           disabled={loading}
         >
           {loading ? (
-            <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin mx-auto" />
+            <span>Loading...</span>
           ) : (
             isSignUp ? 'Create Account' : 'Sign In'
           )}
         </button>
 
-        <div className="text-center mt-2">
+        <div className="auth-form__toggle">
           <button
             type="button"
-            className="text-white/40 text-sm hover:text-white transition-colors"
+            className="auth-form__toggle-btn"
             onClick={() => {
               setIsSignUp(!isSignUp)
               setError(null)

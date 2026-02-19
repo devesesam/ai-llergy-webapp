@@ -148,22 +148,21 @@ export default function SeverityModal({
                 <span className="severity-modal__item-icon">{item.icon}</span>
                 <span className="severity-modal__item-name">{item.label}</span>
               </div>
-              <div className="severity-selector">
-                {SEVERITY_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`severity-option severity-option--${option.value} ${
-                      severityMap[item.id] === option.value
-                        ? "severity-option--active"
-                        : ""
-                    }`}
-                    onClick={() => handleSeverityChange(item.id, option.value)}
-                    title={option.description}
-                  >
-                    {option.shortLabel}
-                  </button>
-                ))}
+              <div className="severity-slider">
+                <div className="severity-slider__labels">
+                  <span className="severity-slider__label severity-slider__label--preference">Preference</span>
+                  <span className="severity-slider__label severity-slider__label--allergy">Intolerance/Allergy</span>
+                  <span className="severity-slider__label severity-slider__label--life_threatening">Life Threatening</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="2"
+                  step="1"
+                  value={SEVERITY_OPTIONS.findIndex(opt => opt.value === severityMap[item.id])}
+                  onChange={(e) => handleSeverityChange(item.id, SEVERITY_OPTIONS[parseInt(e.target.value)].value)}
+                  className={`severity-slider__input severity-slider__input--${severityMap[item.id]}`}
+                />
               </div>
             </div>
           ))}
