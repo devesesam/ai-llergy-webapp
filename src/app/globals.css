@@ -219,8 +219,8 @@ header h1 {
 }
 
 .allergen-group__dropdown {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
   padding: 0.75rem 1rem 1rem;
   border-top: 1px solid var(--border-subtle);
@@ -234,17 +234,24 @@ header h1 {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 1.25rem 1rem;
+  padding: 1rem 0.75rem;
   background-color: var(--color-surface);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  min-height: 90px;
+  aspect-ratio: 1 / 0.85;
+  width: 100%;
+}
+
+.allergen-option .label {
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
 }
 
 .allergen-option:hover {
@@ -453,6 +460,27 @@ header h1 {
 
 .type-badge--life_threatening {
   background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Mobile Optimizations */
+@media (max-width: 380px) {
+  .allergen-grid__buttons {
+    gap: 0.5rem;
+  }
+
+  .allergen-option {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .allergen-option .icon {
+    font-size: 1.5em;
+  }
+
+  .allergen-group__dropdown {
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem 0.75rem;
+  }
 }
 
 /* Desktop Styles */
