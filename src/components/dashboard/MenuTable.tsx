@@ -46,14 +46,14 @@ export default function MenuTable({ venueId, menuItems }: MenuTableProps) {
     }
 
     return (
-        <div className="bg-surface border border-white/10 rounded-2xl overflow-hidden shadow-xl">
-            <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
-                <h2 className="font-heading text-white">Current Menu</h2>
+        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h2 className="font-heading text-gray-900">Current Menu</h2>
                 <div className="flex gap-2">
-                    <button className="px-3 py-1.5 text-xs font-medium text-white/60 hover:text-white border border-white/10 rounded-lg hover:bg-white/5 transition-colors">
+                    <button className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg hover:bg-white transition-colors">
                         Filter
                     </button>
-                    <button className="px-3 py-1.5 text-xs font-medium text-white/60 hover:text-white border border-white/10 rounded-lg hover:bg-white/5 transition-colors">
+                    <button className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg hover:bg-white transition-colors">
                         Export
                     </button>
                 </div>
@@ -62,7 +62,7 @@ export default function MenuTable({ venueId, menuItems }: MenuTableProps) {
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                     <thead>
-                        <tr className="border-b border-white/10 text-white/40 uppercase text-xs tracking-wider">
+                        <tr className="border-b border-gray-100 text-gray-400 uppercase text-xs tracking-wider">
                             <th className="p-4 font-medium">Dish Name</th>
                             <th className="p-4 font-medium w-1/3">Ingredients</th>
                             <th className="p-4 font-medium text-center">Dairy</th>
@@ -71,14 +71,14 @@ export default function MenuTable({ venueId, menuItems }: MenuTableProps) {
                             <th className="p-4 font-medium text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-gray-50">
                         {activeItems.map((item) => (
-                            <tr key={item.id} className="hover:bg-white/5 transition-colors group">
+                            <tr key={item.id} className="hover:bg-gray-50 transition-colors group">
                                 <td className="p-4">
-                                    <span className="font-medium text-white block">{item.name}</span>
-                                    {!item.is_active && <span className="text-xs text-white/40 italic">Hidden</span>}
+                                    <span className="font-medium text-gray-900 block">{item.name}</span>
+                                    {!item.is_active && <span className="text-xs text-gray-400 italic">Hidden</span>}
                                 </td>
-                                <td className="p-4 text-white/60 truncate max-w-xs">
+                                <td className="p-4 text-gray-500 truncate max-w-xs">
                                     {item.ingredients || 'No ingredients listed'}
                                 </td>
 
@@ -94,7 +94,7 @@ export default function MenuTable({ venueId, menuItems }: MenuTableProps) {
                                 </td>
 
                                 <td className="p-4 text-right">
-                                    <button className="text-white/40 hover:text-primary transition-colors">
+                                    <button className="text-gray-400 hover:text-primary transition-colors">
                                         Edit
                                     </button>
                                 </td>
@@ -103,7 +103,7 @@ export default function MenuTable({ venueId, menuItems }: MenuTableProps) {
 
                         {activeItems.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="p-8 text-center text-white/40">
+                                <td colSpan={6} className="p-8 text-center text-gray-400">
                                     No menu items found.
                                 </td>
                             </tr>
@@ -119,11 +119,11 @@ function AllergenToggle({ active, onClick }: { active: boolean, onClick: () => v
     return (
         <button
             onClick={onClick}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${active ? 'bg-primary' : 'bg-white/10'
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${active ? 'bg-primary' : 'bg-gray-200'
                 }`}
         >
             <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${active ? 'translate-x-6' : 'translate-x-1'
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${active ? 'translate-x-6' : 'translate-x-1'
                     }`}
             />
         </button>

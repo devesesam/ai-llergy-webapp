@@ -53,40 +53,40 @@ export default async function DashboardPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-heading text-white mb-2">Dashboard</h1>
-        <p className="text-white/60">
+        <h1 className="text-3xl font-heading text-gray-900 mb-2">Dashboard</h1>
+        <p className="text-gray-600">
           Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''}!
         </p>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-        <div className="bg-surface border border-white/10 p-6 rounded-2xl">
-          <span className="block text-3xl font-heading text-white mb-1">{venues.length}</span>
-          <span className="text-sm text-white/50 uppercase tracking-wider font-medium">Venues</span>
+        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
+          <span className="block text-3xl font-heading text-gray-900 mb-1">{venues.length}</span>
+          <span className="text-sm text-gray-500 uppercase tracking-wider font-medium">Venues</span>
         </div>
-        <div className="bg-surface border border-white/10 p-6 rounded-2xl">
-          <span className="block text-3xl font-heading text-white mb-1">
+        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
+          <span className="block text-3xl font-heading text-gray-900 mb-1">
             {Object.values(countsByVenue).reduce((a, b) => a + b, 0)}
           </span>
-          <span className="text-sm text-white/50 uppercase tracking-wider font-medium">Menu Items</span>
+          <span className="text-sm text-gray-500 uppercase tracking-wider font-medium">Menu Items</span>
         </div>
       </div>
 
       {/* Venues Section */}
       <section className="mb-12">
         <div className="flex justify-between items-end mb-6">
-          <h2 className="text-xl font-heading text-white">Your Venues</h2>
-          <Link href="/dashboard/venues/new" className="px-5 py-2.5 bg-primary text-background font-medium rounded-lg hover:bg-primary/90 transition-colors">
+          <h2 className="text-xl font-heading text-gray-900">Your Venues</h2>
+          <Link href="/dashboard/venues/new" className="px-5 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm">
             + New Venue
           </Link>
         </div>
 
         {venues.length === 0 ? (
-          <div className="text-center py-16 px-4 bg-surface border border-white/10 rounded-2xl border-dashed">
-            <p className="text-white mb-2">You don&apos;t have any venues yet.</p>
-            <p className="text-white/50 mb-6 text-sm">Create your first venue to start managing menus.</p>
-            <Link href="/dashboard/venues/new" className="inline-block px-6 py-3 bg-primary text-background font-medium rounded-lg hover:bg-primary/90 transition-colors">
+          <div className="text-center py-16 px-4 bg-white border border-gray-200 rounded-2xl border-dashed">
+            <p className="text-gray-900 mb-2">You don&apos;t have any venues yet.</p>
+            <p className="text-gray-500 mb-6 text-sm">Create your first venue to start managing menus.</p>
+            <Link href="/dashboard/venues/new" className="inline-block px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm">
               Create Your First Venue
             </Link>
           </div>
@@ -96,17 +96,17 @@ export default async function DashboardPage() {
               <Link
                 key={membership.venue_id}
                 href={`/dashboard/venues/${membership.venue_id}`}
-                className="block bg-surface border border-white/10 p-6 rounded-2xl hover:border-primary/50 hover:bg-white/5 transition-all group"
+                className="block bg-white border border-gray-100 p-6 rounded-2xl hover:border-primary/50 hover:shadow-md transition-all group"
               >
-                <h3 className="text-xl font-heading text-white mb-1 group-hover:text-primary transition-colors">
+                <h3 className="text-xl font-heading text-gray-900 mb-1 group-hover:text-primary transition-colors">
                   {membership.venues?.name || 'Unknown Venue'}
                 </h3>
-                <p className="text-sm text-white/40 mb-4 bg-white/5 inline-block px-2 py-1 rounded">
+                <p className="text-sm text-gray-500 mb-4 bg-gray-50 inline-block px-2 py-1 rounded">
                   /{membership.venues?.slug}
                 </p>
-                <div className="flex justify-between items-center text-sm border-t border-white/10 pt-4 mt-2">
-                  <span className="text-white/70">{countsByVenue[membership.venue_id] || 0} menu items</span>
-                  <span className="text-white/40 uppercase text-xs font-bold tracking-wider">{membership.role}</span>
+                <div className="flex justify-between items-center text-sm border-t border-gray-100 pt-4 mt-2">
+                  <span className="text-gray-600">{countsByVenue[membership.venue_id] || 0} menu items</span>
+                  <span className="text-gray-400 uppercase text-xs font-bold tracking-wider">{membership.role}</span>
                 </div>
               </Link>
             ))}

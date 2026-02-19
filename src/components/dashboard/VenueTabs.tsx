@@ -17,11 +17,11 @@ export default function VenueTabs({ venueId, venueName, menuItems }: VenueTabsPr
     return (
         <div className="w-full">
             <div className="mb-8">
-                <h1 className="text-3xl font-heading text-white mb-2">{venueName}</h1>
-                <div className="flex gap-4 border-b border-white/10">
+                <h1 className="text-3xl font-heading text-text mb-2">{venueName}</h1>
+                <div className="flex gap-4 border-b border-light">
                     <button
                         onClick={() => setActiveTab('info')}
-                        className={`pb-3 px-1 text-sm font-medium transition-all relative ${activeTab === 'info' ? 'text-primary' : 'text-white/40 hover:text-white'
+                        className={`pb-3 px-1 text-sm font-medium transition-all relative ${activeTab === 'info' ? 'text-primary' : 'text-text-muted hover:text-text'
                             }`}
                     >
                         Venue Information
@@ -34,7 +34,7 @@ export default function VenueTabs({ venueId, venueName, menuItems }: VenueTabsPr
                     </button>
                     <button
                         onClick={() => setActiveTab('menu')}
-                        className={`pb-3 px-1 text-sm font-medium transition-all relative ${activeTab === 'menu' ? 'text-primary' : 'text-white/40 hover:text-white'
+                        className={`pb-3 px-1 text-sm font-medium transition-all relative ${activeTab === 'menu' ? 'text-primary' : 'text-text-muted hover:text-text'
                             }`}
                     >
                         Menu & Ingredients
