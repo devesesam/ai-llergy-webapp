@@ -147,8 +147,8 @@ header h1 {
 }
 
 .allergen-grid__buttons {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
 }
 
@@ -229,19 +229,22 @@ header h1 {
 
 /* Allergen Button Styles */
 .allergen-option {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 1.25rem 1rem;
   background-color: var(--color-surface);
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-btn);
+  border-radius: var(--radius-md);
   color: var(--color-text);
   font-family: var(--font-body);
   font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  min-height: 90px;
 }
 
 .allergen-option:hover {
@@ -273,7 +276,7 @@ header h1 {
 }
 
 .allergen-option .icon {
-  font-size: 1.2em;
+  font-size: 1.75em;
 }
 
 /* Modal Styles */
