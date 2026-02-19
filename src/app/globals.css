@@ -102,7 +102,7 @@ h3 {
   overflow-x: hidden;
   padding: var(--spacing-md);
   display: flex;
-  flex-col: column;
+  flex-direction: column;
 }
 
 /* Header Styles */
