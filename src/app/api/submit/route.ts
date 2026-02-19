@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { SelectedAllergen, CustomTag } from "@/lib/allergens";
+import type { SelectedAllergen, CustomTag, SeverityType } from "@/lib/allergens";
 import { ALLERGEN_TO_COLUMN, getAllergenById } from "@/lib/allergens";
 import { getMenu, getCacheStatus, getAvailableColumns } from "@/lib/menu-service";
-import { filterMenu, formatWarnings, FilteredItem } from "@/lib/filter-menu";
+import {
+  filterMenu,
+  filterMenuWithConfidence,
+  hasConfidenceScores,
+  formatWarnings,
+  FilteredItem,
+} from "@/lib/filter-menu";
 import { filterMenuWithAI } from "@/lib/ai-filter";
+import type { AllergenWithSeverity } from "@/lib/confidence";
 
 interface SubmissionBody {
   allergens: SelectedAllergen[];
@@ -58,9 +65,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract allergen IDs from the SelectedAllergen objects
-    // The type distinction is for UI only; filtering treats all the same
+    // Extract allergen IDs and preserve severity for confidence-based filtering
     const allergenIds = allergens.map((a: SelectedAllergen) => a.id);
+
+    // Preserve allergens with severity for confidence-based filtering
+    const allergensWithSeverity: AllergenWithSeverity[] = allergens.map((a) => ({
+      id: a.id,
+      type: a.type || "preference", // Default to preference if not specified
+    }));
 
     // Combine button selections with custom allergen IDs (already validated tags)
     const allAllergens = [...allergenIds];
@@ -100,10 +112,19 @@ export async function POST(request: NextRequest) {
     // Check if we need AI filtering (missing columns OR custom tags)
     const needsAI = aiAllergens.length > 0 || hasCustomTags;
 
+    // Check if menu has pre-computed confidence scores (Supabase venues)
+    const useConfidenceFiltering = hasConfidenceScores(menu);
+
     let result;
 
-    if (!needsAI) {
+    if (useConfidenceFiltering && !needsAI) {
+      // CONFIDENCE PATH: Use pre-computed confidence scores with severity thresholds
+      // This is for Supabase venues with allergen_confidence data
+      console.log(`[route] Using confidence-based filtering with severity thresholds`);
+      result = filterMenuWithConfidence(menu, allergensWithSeverity);
+    } else if (!needsAI) {
       // FAST PATH: All allergens have columns, use column-based filtering only
+      // This is for Google Sheets venues
       result = filterMenu(menu, columnAllergens);
     } else {
       // HYBRID PATH: Some allergens missing columns OR we have custom tags
@@ -175,6 +196,7 @@ export async function POST(request: NextRequest) {
       aiAllergens,
       customTags: customTags?.map(t => t.text) || [],
       usedAI: needsAI,
+      usedConfidenceFiltering: useConfidenceFiltering,
       safeCount: result.safeItems.length,
       cautionCount: result.cautionItems.length,
       excludedCount: result.excludedCount,

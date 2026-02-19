@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { AllergenGroup as AllergenGroupType, Allergen, SelectedAllergen, getAllergenById } from "@/lib/allergens";
+import { AllergenGroup as AllergenGroupType, Allergen, SelectedAllergen, SeverityType, getAllergenById } from "@/lib/allergens";
 import AllergenButton from "./AllergenButton";
 
 interface AllergenGroupProps {
   group: AllergenGroupType;
+  pendingAllergenIds: string[];
   selectedAllergens: SelectedAllergen[];
   onAllergenClick: (allergen: Allergen) => void;
 }
 
 export default function AllergenGroup({
   group,
+  pendingAllergenIds,
   selectedAllergens,
   onAllergenClick,
 }: AllergenGroupProps) {
@@ -22,13 +24,23 @@ export default function AllergenGroup({
     .map(id => getAllergenById(id))
     .filter((a): a is Allergen => a !== undefined);
 
-  // Count how many in this group are selected
+  // Check if an allergen is pending
+  const isPending = (id: string): boolean => {
+    return pendingAllergenIds.includes(id);
+  };
+
+  // Check if an allergen is confirmed
+  const isConfirmed = (id: string): boolean => {
+    return selectedAllergens.some(s => s.id === id);
+  };
+
+  // Count how many in this group are selected (pending or confirmed)
   const selectedCount = group.members.filter(id =>
-    selectedAllergens.some(s => s.id === id)
+    pendingAllergenIds.includes(id) || selectedAllergens.some(s => s.id === id)
   ).length;
 
-  // Get selection type for an allergen
-  const getSelectionType = (id: string): "allergy" | "preference" | undefined => {
+  // Get selection type for a confirmed allergen
+  const getSelectionType = (id: string): SeverityType | undefined => {
     const selection = selectedAllergens.find(s => s.id === id);
     return selection?.type;
   };
@@ -58,7 +70,8 @@ export default function AllergenGroup({
             <AllergenButton
               key={allergen.id}
               allergen={allergen}
-              isSelected={selectedAllergens.some(s => s.id === allergen.id)}
+              isSelected={isConfirmed(allergen.id)}
+              isPending={isPending(allergen.id)}
               selectionType={getSelectionType(allergen.id)}
               onToggle={() => onAllergenClick(allergen)}
             />

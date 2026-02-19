@@ -50,11 +50,21 @@ export const ALLERGEN_TO_COLUMN: Record<string, string> = Object.fromEntries(
   ALL_FILTERS.map((a) => [a.id, a.columnName])
 );
 
-// Selected allergen with type distinction
+// Severity type for allergen selections
+export type SeverityType = "preference" | "allergy" | "life_threatening";
+
+// Selected allergen with severity type
 export interface SelectedAllergen {
   id: string;
-  type: "allergy" | "preference";
+  type: SeverityType;
 }
+
+// Severity options for the modal
+export const SEVERITY_OPTIONS = [
+  { value: "preference" as const, label: "Preference", shortLabel: "P", description: "I prefer to avoid this" },
+  { value: "allergy" as const, label: "Intolerance/Allergy", shortLabel: "A", description: "I cannot eat this safely" },
+  { value: "life_threatening" as const, label: "Life Threatening", shortLabel: "L", description: "Medical emergency risk" },
+];
 
 export interface AllergenSubmission {
   allergens: SelectedAllergen[];
@@ -67,6 +77,7 @@ export interface CustomTag {
   id: string;           // Generated unique ID (e.g., "custom_cucumber_1234")
   text: string;         // Original user text
   displayLabel: string; // Formatted for display (capitalized)
+  type?: SeverityType;  // Severity level (set in SeverityModal)
 }
 
 // Allergen group definition

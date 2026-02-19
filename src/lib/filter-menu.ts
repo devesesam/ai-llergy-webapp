@@ -1,10 +1,17 @@
 /**
  * Menu filtering logic based on allergen selections
  * Handles YES/NO/CAN BE values from the sheet
+ * Also supports confidence-based filtering for Supabase venues
  */
 
 import { MenuItem } from "./menu-service";
-import { ALLERGEN_TO_COLUMN } from "./allergens";
+import { ALLERGEN_TO_COLUMN, SeverityType } from "./allergens";
+import {
+  SEVERITY_THRESHOLDS,
+  DEFAULT_NO_DATA_CONFIDENCE,
+  AllergenWithSeverity,
+  getFilterCategory,
+} from "./confidence";
 
 export interface FilteredItem {
   item: MenuItem;
@@ -116,4 +123,89 @@ export function formatWarnings(warnings: string[]): string[] {
     }
     return `Can be made ${label}-free on request`;
   });
+}
+
+/**
+ * Extended menu item interface with confidence scores
+ */
+export interface MenuItemWithConfidence extends MenuItem {
+  allergenConfidence?: Record<string, number>;
+}
+
+/**
+ * Filter menu using pre-computed confidence scores and severity-based thresholds
+ *
+ * This is used for Supabase-backed venues that have allergen_confidence stored.
+ * Uses severity to determine threshold:
+ * - preference: >25% confidence required
+ * - allergy: >80% confidence required
+ * - life_threatening: >95% confidence required
+ *
+ * @param menu - Menu items with pre-computed confidence scores
+ * @param selectedAllergens - Allergens with severity levels
+ * @returns Filtered results with safe items, caution items, and excluded count
+ */
+export function filterMenuWithConfidence(
+  menu: MenuItemWithConfidence[],
+  selectedAllergens: AllergenWithSeverity[]
+): FilterResult {
+  if (selectedAllergens.length === 0) {
+    return {
+      safeItems: menu.map((item) => ({ item, safe: true, warnings: [], excluded: [] })),
+      cautionItems: [],
+      excludedCount: 0,
+    };
+  }
+
+  const safeItems: FilteredItem[] = [];
+  const cautionItems: FilteredItem[] = [];
+  let excludedCount = 0;
+
+  for (const item of menu) {
+    const confidenceScores = item.allergenConfidence || {};
+    const warnings: string[] = [];
+    const excluded: string[] = [];
+    let isExcluded = false;
+    let isCaution = false;
+
+    for (const { id: allergenId, type: severity } of selectedAllergens) {
+      const threshold = SEVERITY_THRESHOLDS[severity];
+      const itemConfidence = confidenceScores[allergenId] ?? DEFAULT_NO_DATA_CONFIDENCE;
+
+      const category = getFilterCategory(itemConfidence, threshold);
+
+      if (category === "excluded") {
+        isExcluded = true;
+        excluded.push(allergenId);
+        break; // No need to check more allergens
+      } else if (category === "caution") {
+        isCaution = true;
+        warnings.push(allergenId);
+      }
+      // "safe" means this allergen passes, continue checking others
+    }
+
+    if (isExcluded) {
+      excludedCount++;
+    } else if (isCaution) {
+      cautionItems.push({ item, safe: false, warnings, excluded });
+    } else {
+      safeItems.push({ item, safe: true, warnings: [], excluded: [] });
+    }
+  }
+
+  return { safeItems, cautionItems, excludedCount };
+}
+
+/**
+ * Check if a menu has pre-computed confidence scores
+ */
+export function hasConfidenceScores(menu: MenuItem[]): boolean {
+  if (menu.length === 0) return false;
+  // Check first item for allergenConfidence
+  const firstItem = menu[0] as MenuItemWithConfidence;
+  return (
+    firstItem.allergenConfidence !== undefined &&
+    Object.keys(firstItem.allergenConfidence).length > 0
+  );
 }

@@ -24,18 +24,57 @@ export default function SelectionSummary({
     return null;
   }
 
-  // Separate allergies and preferences from button selections
+  // Separate by severity (ordered: life threatening, allergies, preferences)
+  const lifeThreatening = selectedAllergens.filter(s => s.type === "life_threatening");
   const allergies = selectedAllergens.filter(s => s.type === "allergy");
   const preferences = selectedAllergens.filter(s => s.type === "preference");
+
+  // Separate custom tags by severity
+  const lifeThreateningTags = customTags.filter(t => t.type === "life_threatening");
+  const allergyTags = customTags.filter(t => t.type === "allergy");
+  const preferenceTags = customTags.filter(t => t.type === "preference");
+  const unclassifiedTags = customTags.filter(t => !t.type);
 
   return (
     <div className="selection-summary">
       <h3 className="selection-summary__title">Your Selections</h3>
 
+      {lifeThreatening.length > 0 && (
+        <div className="selection-summary__group">
+          <span className="selection-summary__label selection-summary__label--life_threatening">
+            Life Threatening
+          </span>
+          <div className="selection-summary__pills">
+            {lifeThreatening.map(selection => {
+              const allergen = getAllergenById(selection.id);
+              if (!allergen) return null;
+              return (
+                <span
+                  key={selection.id}
+                  className="selection-pill selection-pill--life_threatening"
+                >
+                  <span className="selection-pill__icon">{allergen.icon}</span>
+                  <span className="selection-pill__label">{allergen.label}</span>
+                </span>
+              );
+            })}
+            {lifeThreateningTags.map(tag => (
+              <span
+                key={tag.id}
+                className="selection-pill selection-pill--life_threatening"
+              >
+                <span className="selection-pill__icon">🏷️</span>
+                <span className="selection-pill__label">{tag.displayLabel}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {allergies.length > 0 && (
         <div className="selection-summary__group">
           <span className="selection-summary__label selection-summary__label--allergy">
-            Allergies
+            Intolerance/Allergy
           </span>
           <div className="selection-summary__pills">
             {allergies.map(selection => {
@@ -51,6 +90,15 @@ export default function SelectionSummary({
                 </span>
               );
             })}
+            {allergyTags.map(tag => (
+              <span
+                key={tag.id}
+                className="selection-pill selection-pill--allergy"
+              >
+                <span className="selection-pill__icon">🏷️</span>
+                <span className="selection-pill__label">{tag.displayLabel}</span>
+              </span>
+            ))}
           </div>
         </div>
       )}
@@ -74,6 +122,15 @@ export default function SelectionSummary({
                 </span>
               );
             })}
+            {preferenceTags.map(tag => (
+              <span
+                key={tag.id}
+                className="selection-pill selection-pill--preference"
+              >
+                <span className="selection-pill__icon">🏷️</span>
+                <span className="selection-pill__label">{tag.displayLabel}</span>
+              </span>
+            ))}
           </div>
         </div>
       )}
@@ -101,13 +158,13 @@ export default function SelectionSummary({
         </div>
       )}
 
-      {customTags.length > 0 && (
+      {unclassifiedTags.length > 0 && (
         <div className="selection-summary__group">
           <span className="selection-summary__label selection-summary__label--custom-tag">
             Custom Restrictions
           </span>
           <div className="selection-summary__pills">
-            {customTags.map(tag => (
+            {unclassifiedTags.map(tag => (
               <span
                 key={tag.id}
                 className="selection-pill selection-pill--custom-tag"

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import DisclaimerModal from "@/components/DisclaimerModal";
 import AllergenGrid from "@/components/AllergenGrid";
-import AllergenTypeModal from "@/components/AllergenTypeModal";
+import SeverityModal from "@/components/SeverityModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import MenuResults from "@/components/MenuResults";
 import AutocompleteInput from "@/components/AutocompleteInput";
@@ -25,6 +25,7 @@ interface ResultsData {
 
 export default function Home() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [pendingAllergenIds, setPendingAllergenIds] = useState<string[]>([]);
   const [selectedAllergens, setSelectedAllergens] = useState<SelectedAllergen[]>([]);
   const [customAllergenIds, setCustomAllergenIds] = useState<string[]>([]);
   const [customTags, setCustomTags] = useState<CustomTag[]>([]);
@@ -32,8 +33,8 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState<ResultsData | null>(null);
 
-  // Modal state for allergy/preference selection
-  const [modalAllergen, setModalAllergen] = useState<Allergen | null>(null);
+  // Modal state for severity selection (shown before submit)
+  const [showSeverityModal, setShowSeverityModal] = useState(false);
 
   useEffect(() => {
     // Show disclaimer modal after a short delay
@@ -43,29 +44,32 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Handle allergen click - either remove if selected, or open modal
+  // Handle allergen click - simple toggle (no modal)
   const handleAllergenClick = (allergen: Allergen) => {
-    const existingIndex = selectedAllergens.findIndex(s => s.id === allergen.id);
-
-    if (existingIndex !== -1) {
-      // Already selected - remove it
-      setSelectedAllergens(prev => prev.filter(s => s.id !== allergen.id));
-    } else {
-      // Not selected - open modal to choose type
-      setModalAllergen(allergen);
-    }
+    setPendingAllergenIds(prev => {
+      if (prev.includes(allergen.id)) {
+        return prev.filter(id => id !== allergen.id);
+      } else {
+        return [...prev, allergen.id];
+      }
+    });
   };
 
-  // Handle type selection from modal
-  const handleTypeSelect = (type: "allergy" | "preference") => {
-    if (modalAllergen) {
-      setSelectedAllergens(prev => [...prev, { id: modalAllergen.id, type }]);
-      setModalAllergen(null);
-    }
+  // Handle severity modal confirmation
+  const handleSeverityConfirm = async (
+    allergens: SelectedAllergen[],
+    tagsWithSeverity: CustomTag[]
+  ) => {
+    setShowSeverityModal(false);
+    setSelectedAllergens(allergens);
+    setCustomTags(tagsWithSeverity);
+
+    // Now submit to API
+    await submitToApi(allergens, tagsWithSeverity);
   };
 
-  const handleCloseModal = () => {
-    setModalAllergen(null);
+  const handleCloseSeverityModal = () => {
+    setShowSeverityModal(false);
   };
 
   const handleAddCustomAllergen = (id: string) => {
@@ -89,14 +93,28 @@ export default function Home() {
     setCustomTags(prev => prev.filter(t => t.id !== tagId));
   };
 
-  const handleSubmit = async () => {
-    if (selectedAllergens.length === 0 && customAllergenIds.length === 0 && customTags.length === 0) {
+  const handleSubmit = () => {
+    // Check if anything is selected
+    const hasSelections =
+      pendingAllergenIds.length > 0 ||
+      customAllergenIds.length > 0 ||
+      customTags.length > 0;
+
+    if (!hasSelections) {
       alert(
         "No allergens selected! Please select at least one or type a custom one if you have specific needs."
       );
       return;
     }
 
+    // Open severity modal instead of submitting directly
+    setShowSeverityModal(true);
+  };
+
+  const submitToApi = async (
+    allergens: SelectedAllergen[],
+    tags: CustomTag[]
+  ) => {
     setIsSubmitting(true);
 
     try {
@@ -106,9 +124,9 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          allergens: selectedAllergens,
+          allergens: allergens,
           customAllergenIds: customAllergenIds,
-          customTags: customTags,
+          customTags: tags,
         }),
       });
 
@@ -134,6 +152,7 @@ export default function Home() {
 
   const handleStartOver = () => {
     setResults(null);
+    setPendingAllergenIds([]);
     setSelectedAllergens([]);
     setCustomAllergenIds([]);
     setCustomTags([]);
@@ -182,12 +201,14 @@ export default function Home() {
         onAgree={() => setShowDisclaimer(false)}
       />
 
-      {modalAllergen && (
-        <AllergenTypeModal
-          allergen={modalAllergen}
+      {showSeverityModal && (
+        <SeverityModal
           isOpen={true}
-          onSelect={handleTypeSelect}
-          onClose={handleCloseModal}
+          pendingAllergenIds={pendingAllergenIds}
+          customAllergenIds={customAllergenIds}
+          customTags={customTags}
+          onConfirm={handleSeverityConfirm}
+          onClose={handleCloseSeverityModal}
         />
       )}
 
@@ -206,6 +227,7 @@ export default function Home() {
 
         <main>
           <AllergenGrid
+            pendingAllergenIds={pendingAllergenIds}
             selectedAllergens={selectedAllergens}
             onAllergenClick={handleAllergenClick}
           />
