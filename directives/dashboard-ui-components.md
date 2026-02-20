@@ -24,7 +24,12 @@ The dashboard (`/dashboard`) is the main interface for venue owners to manage th
 | `src/app/dashboard/layout.tsx` | Root layout, renders DashboardNav |
 | `src/app/dashboard/page.tsx` | Main dashboard with stats + venue list |
 | `src/components/dashboard/DashboardNav.tsx` | Sidebar navigation |
-| `src/app/globals.css` | BEM-style dashboard classes |
+| `src/components/dashboard/VenueTabs.tsx` | Tab navigation for venue detail pages |
+| `src/components/dashboard/MenuTable.tsx` | Menu items table with allergen tags |
+| `src/components/dashboard/EquipmentList.tsx` | Kitchen equipment cards (empty by default) |
+| `src/components/dashboard/VenueSettings.tsx` | Venue settings form (name, slug) |
+| `src/app/api/venues/[venueId]/route.ts` | API for updating venue settings |
+| `src/app/globals.css` | BEM-style dashboard classes + modern utilities |
 
 ## Component Patterns
 
@@ -167,6 +172,58 @@ Always include:
 - Helpful description (max-width constrained)
 - Primary action button
 
+### Menu Table
+
+Location: [MenuTable.tsx](../src/components/dashboard/MenuTable.tsx)
+
+The menu table displays all menu items with their allergens as compact tags:
+
+```tsx
+<table className="w-full">
+  <thead className="bg-gray-50/80">
+    <tr>
+      <th>Dish Name</th>
+      <th>Ingredients</th>
+      <th>Allergens</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+</table>
+```
+
+**Key features:**
+- Allergens displayed as amber-colored tags in a single column (scalable for all 23 allergens)
+- "Add Item" button in header (always visible, not just in empty state)
+- Links to `/dashboard/venues/[venueId]/menu/new` for adding items
+- Empty state with icon and call-to-action
+
+### Venue Settings
+
+Location: [VenueSettings.tsx](../src/components/dashboard/VenueSettings.tsx)
+
+Settings tab allows venue owners/admins to update:
+- Venue name
+- Public URL slug
+
+```tsx
+<VenueSettings venueId={venueId} venueName={venueName} venueSlug={venueSlug} />
+```
+
+**API endpoint:** `PATCH /api/venues/[venueId]`
+- Requires authentication
+- Only owners/admins can update
+- Validates slug format (lowercase, numbers, hyphens only)
+- Checks for slug uniqueness
+
+### VenueTabs
+
+Location: [VenueTabs.tsx](../src/components/dashboard/VenueTabs.tsx)
+
+Three tabs for venue management:
+1. **Venue Information** - Equipment list (currently empty, future feature)
+2. **Menu & Ingredients** - Menu table with allergen tags
+3. **Settings** - Venue name and slug configuration
+
 ## Issues Fixed (February 2026)
 
 | Issue | Fix | PR/Commit |
@@ -175,6 +232,10 @@ Always include:
 | Empty state used dashed border | Switched to solid card with icon | - |
 | Emoji icons in sidebar | Replaced with Lucide React icons | - |
 | Section header misalignment | Changed `items-end` to `items-center` | - |
+| Menu table only showed 3 allergen columns | Switched to single column with tags (supports all 23) | - |
+| Mock equipment data showing | Removed mock data, shows empty state by default | - |
+| No settings tab | Added Settings tab with venue name/slug editing | - |
+| Add Item button only in empty state | Added to table header (always visible) | - |
 
 ## Dependencies
 

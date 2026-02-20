@@ -86,35 +86,93 @@ Tailwind equivalents: `gap-2`, `gap-4`, `gap-6`, `p-4`, `p-6`, `p-8`, `mb-6`, `m
 
 Tailwind equivalents: `rounded-lg`, `rounded-xl`, `rounded-2xl`, `rounded-full`
 
+## Shadow System
+
+Modern layered shadows for depth and hierarchy:
+
+| Class | Effect | Usage |
+|-------|--------|-------|
+| `shadow-card` | Subtle depth | Cards at rest |
+| `shadow-card-hover` | Elevated depth | Cards on hover |
+
+```css
+.shadow-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+.shadow-card-hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+```
+
 ## Component Patterns
 
 ### Cards
 
 ```tsx
-<div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
+<div className="bg-white p-6 rounded-2xl shadow-card hover:shadow-card-hover transition-all">
   {/* Card content */}
 </div>
 ```
 
-### Primary Buttons
+### Button System
+
+Use the `btn-base` class with size modifiers:
+
+| Class | Padding | Font Size | Radius |
+|-------|---------|-----------|--------|
+| `btn-sm` | 0.625rem 1rem | 0.875rem | 0.5rem |
+| `btn-md` | 0.875rem 1.5rem | 0.9375rem | 0.625rem |
+| `btn-lg` | 1rem 2rem | 1rem | 0.75rem |
 
 ```tsx
-<button className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm">
+// Primary button
+<button className="btn-base btn-md bg-primary text-white hover:bg-primary/90 shadow-sm">
+  <Plus className="w-5 h-5" />
   Button Text
 </button>
-```
 
-Or using legacy BEM classes:
-```tsx
-<button className="btn primary-btn">Button Text</button>
-```
-
-### Secondary Buttons
-
-```tsx
-<button className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
-  Secondary
+// Secondary button
+<button className="btn-base btn-sm bg-white border border-gray-200 text-gray-700 hover:bg-gray-50">
+  <Filter className="w-4 h-4" />
+  Filter
 </button>
+
+// Ghost button
+<button className="btn-base btn-sm btn-ghost text-gray-500 hover:text-primary">
+  <Pencil className="w-4 h-4" />
+  Edit
+</button>
+```
+
+### Badge System
+
+Status badges with semantic colors:
+
+| Class | Background | Text Color | Usage |
+|-------|------------|------------|-------|
+| `badge-success` | Green 10% | Green | Positive states, Low risk |
+| `badge-warning` | Amber 10% | Amber | Caution, Medium risk |
+| `badge-danger` | Red 10% | Red | Alerts, High risk |
+| `badge-neutral` | Gray 10% | Gray | Informational, roles |
+
+```tsx
+<span className="badge badge-success">Low Risk</span>
+<span className="badge badge-warning">Medium Risk</span>
+<span className="badge badge-danger">High Risk</span>
+<span className="badge badge-neutral">owner</span>
+```
+
+### Tag/Pill System
+
+For allergen tags and labels:
+
+```tsx
+<span className="tag">Dairy</span>
+
+// Or inline amber style for allergens in tables:
+<span className="inline-flex px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">
+  Gluten
+</span>
 ```
 
 ### Inputs

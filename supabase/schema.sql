@@ -129,11 +129,11 @@ CREATE POLICY "Owners can delete venues" ON venues
 -- POLICIES: venue_members
 -- ============================================
 
--- Users can view memberships for their venues
+-- Users can view their own venue memberships
+-- NOTE: Avoid self-referential subqueries - causes infinite recursion (error 42P17)
+-- See directives/supabase-rls-policies.md for details
 CREATE POLICY "Users can view venue memberships" ON venue_members
-  FOR SELECT USING (
-    venue_id IN (SELECT venue_id FROM venue_members WHERE user_id = auth.uid())
-  );
+  FOR SELECT USING (user_id = auth.uid());
 
 -- Owners and admins can add members
 CREATE POLICY "Owners and admins can add members" ON venue_members

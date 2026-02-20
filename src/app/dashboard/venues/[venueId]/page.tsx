@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import type { Venue, MenuItem } from '@/lib/supabase/types'
 import VenueTabs from '@/components/dashboard/VenueTabs'
 
@@ -12,10 +13,6 @@ export default async function VenueDetailPage({ params }: PageProps) {
   const { venueId } = await params
   const supabase = await createClient()
 
-  // Debug: Check auth status
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  console.log('[VenueDetail] Auth check:', { userId: user?.id, authError: authError?.message })
-
   // Get venue details
   const { data: venueData, error } = await supabase
     .from('venues')
@@ -23,25 +20,8 @@ export default async function VenueDetailPage({ params }: PageProps) {
     .eq('id', venueId)
     .single() as { data: Venue | null; error: unknown }
 
-  console.log('[VenueDetail] Venue query:', { venueId, venueData, error })
-
-  // Temporary debug - show auth state instead of 404
   if (error || !venueData) {
-    return (
-      <div className="p-8 text-white">
-        <h1 className="text-xl font-bold mb-4">Debug Info</h1>
-        <pre className="bg-gray-800 p-4 rounded text-sm overflow-auto">
-          {JSON.stringify({
-            venueId,
-            userId: user?.id || null,
-            userEmail: user?.email || null,
-            authError: authError?.message || null,
-            queryError: error,
-            venueData
-          }, null, 2)}
-        </pre>
-      </div>
-    )
+    notFound()
   }
 
   const venue = venueData
@@ -57,11 +37,12 @@ export default async function VenueDetailPage({ params }: PageProps) {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      <Link href="/dashboard/venues" className="inline-block mb-6 text-white/50 hover:text-white transition-colors text-sm">
-        &larr; Back to Venues
+      <Link href="/dashboard/venues" className="inline-flex items-center gap-2 mb-6 text-gray-500 hover:text-gray-900 transition-colors text-sm font-medium">
+        <ArrowLeft className="w-4 h-4" />
+        Back to Venues
       </Link>
 
-      <VenueTabs venueId={venue.id} venueName={venue.name} menuItems={items} />
+      <VenueTabs venueId={venue.id} venueName={venue.name} venueSlug={venue.slug} menuItems={items} />
     </div>
   )
 }

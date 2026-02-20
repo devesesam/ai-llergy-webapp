@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Building2, UtensilsCrossed, Store, Plus } from 'lucide-react'
+import { Building2, UtensilsCrossed, Store, Plus, ChevronRight } from 'lucide-react'
 
 interface VenueMembership {
   venue_id: string
@@ -62,48 +62,52 @@ export default async function DashboardPage() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <div className="bg-white border border-gray-100 p-8 rounded-2xl shadow-sm flex items-center gap-5">
-          <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Building2 className="w-7 h-7 text-primary" />
-          </div>
-          <div>
-            <span className="block text-4xl font-heading text-gray-900 leading-none">{venues.length}</span>
-            <span className="text-sm text-gray-500 mt-1 block">Venues</span>
+        <div className="bg-white p-6 rounded-2xl shadow-card hover:shadow-card-hover transition-all">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-7 h-7 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">Venues</p>
+              <p className="text-3xl font-heading text-gray-900">{venues.length}</p>
+            </div>
           </div>
         </div>
-        <div className="bg-white border border-gray-100 p-8 rounded-2xl shadow-sm flex items-center gap-5">
-          <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <UtensilsCrossed className="w-7 h-7 text-primary" />
-          </div>
-          <div>
-            <span className="block text-4xl font-heading text-gray-900 leading-none">
-              {Object.values(countsByVenue).reduce((a, b) => a + b, 0)}
-            </span>
-            <span className="text-sm text-gray-500 mt-1 block">Menu Items</span>
+        <div className="bg-white p-6 rounded-2xl shadow-card hover:shadow-card-hover transition-all">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
+              <UtensilsCrossed className="w-7 h-7 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500 mb-1">Menu Items</p>
+              <p className="text-3xl font-heading text-gray-900">
+                {Object.values(countsByVenue).reduce((a, b) => a + b, 0)}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Venues Section */}
       <section className="mb-12">
-        <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <h2 className="text-2xl font-heading text-gray-900">Your Venues</h2>
-          <Link href="/dashboard/venues/new" className="px-5 py-2.5 bg-primary text-white font-medium rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm">
+          <Link href="/dashboard/venues/new" className="btn-base btn-md bg-primary text-white hover:bg-primary/90 shadow-sm">
             <Plus className="w-5 h-5" />
             New Venue
           </Link>
         </div>
 
         {venues.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 px-6 bg-white border border-gray-100 rounded-2xl">
-            <div className="w-20 h-20 mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="flex flex-col items-center justify-center py-20 px-8 bg-white rounded-2xl shadow-card">
+            <div className="w-20 h-20 mb-6 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
               <Store className="w-10 h-10 text-primary" />
             </div>
             <h3 className="text-2xl font-heading text-gray-900 mb-3">No venues yet</h3>
-            <p className="text-gray-500 mb-8 max-w-md text-center">
+            <p className="text-gray-500 mb-8 max-w-md text-center leading-relaxed">
               Create your first venue to start tracking allergens and managing menus.
             </p>
-            <Link href="/dashboard/venues/new" className="px-8 py-4 bg-primary text-white text-lg font-medium rounded-xl hover:bg-primary/90 transition-colors shadow-md">
+            <Link href="/dashboard/venues/new" className="btn-base btn-lg bg-primary text-white hover:bg-primary/90 shadow-md">
               Create Your First Venue
             </Link>
           </div>
@@ -113,17 +117,21 @@ export default async function DashboardPage() {
               <Link
                 key={membership.venue_id}
                 href={`/dashboard/venues/${membership.venue_id}`}
-                className="block bg-white border border-gray-100 p-6 rounded-2xl hover:border-primary/50 hover:shadow-md transition-all group"
+                className="group bg-white p-6 rounded-2xl shadow-card hover:shadow-card-hover transition-all"
               >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <Store className="w-6 h-6 text-primary" />
+                  </div>
+                  <span className="badge badge-neutral">{membership.role}</span>
+                </div>
                 <h3 className="text-xl font-heading text-gray-900 mb-1 group-hover:text-primary transition-colors">
                   {membership.venues?.name || 'Unknown Venue'}
                 </h3>
-                <p className="text-sm text-gray-500 mb-4 bg-gray-50 inline-block px-2 py-1 rounded">
-                  /{membership.venues?.slug}
-                </p>
-                <div className="flex justify-between items-center text-sm border-t border-gray-100 pt-4 mt-2">
-                  <span className="text-gray-600">{countsByVenue[membership.venue_id] || 0} menu items</span>
-                  <span className="text-gray-400 uppercase text-xs font-bold tracking-wider">{membership.role}</span>
+                <p className="text-sm text-gray-500 mb-4">/{membership.venues?.slug}</p>
+                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                  <span className="text-sm text-gray-500">{countsByVenue[membership.venue_id] || 0} menu items</span>
+                  <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                 </div>
               </Link>
             ))}

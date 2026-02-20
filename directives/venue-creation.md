@@ -76,3 +76,17 @@ When database triggers depend on related table data (like `venue_members` depend
 4. Return structured errors instead of throwing
 
 This avoids silent failures from FK constraint violations in triggers.
+
+## Important: Trigger Removed
+
+The `on_venue_created_add_owner` trigger was **dropped** from the database because it conflicts with the RPC function (both try to add the owner, causing a duplicate key error).
+
+If re-deploying the full schema.sql, make sure to drop this trigger afterward:
+```sql
+DROP TRIGGER IF EXISTS on_venue_created_add_owner ON venues;
+```
+
+## Related Issues
+
+- **RLS Recursion:** If you see error `42P17 - infinite recursion detected`, check `supabase-rls-policies.md`
+- **RPC Typing:** See `supabase-rpc-typing.md` for the `as never` workaround
