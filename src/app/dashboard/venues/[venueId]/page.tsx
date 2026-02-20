@@ -25,8 +25,23 @@ export default async function VenueDetailPage({ params }: PageProps) {
 
   console.log('[VenueDetail] Venue query:', { venueId, venueData, error })
 
+  // Temporary debug - show auth state instead of 404
   if (error || !venueData) {
-    notFound()
+    return (
+      <div className="p-8 text-white">
+        <h1 className="text-xl font-bold mb-4">Debug Info</h1>
+        <pre className="bg-gray-800 p-4 rounded text-sm overflow-auto">
+          {JSON.stringify({
+            venueId,
+            userId: user?.id || null,
+            userEmail: user?.email || null,
+            authError: authError?.message || null,
+            queryError: error,
+            venueData
+          }, null, 2)}
+        </pre>
+      </div>
+    )
   }
 
   const venue = venueData
