@@ -61,49 +61,49 @@ export default async function DashboardPage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Building2 className="w-6 h-6 text-primary" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="bg-white border border-gray-100 p-8 rounded-2xl shadow-sm flex items-center gap-5">
+          <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Building2 className="w-7 h-7 text-primary" />
           </div>
           <div>
-            <span className="block text-3xl font-heading text-gray-900">{venues.length}</span>
-            <span className="text-sm text-gray-500">Venues</span>
+            <span className="block text-4xl font-heading text-gray-900 leading-none">{venues.length}</span>
+            <span className="text-sm text-gray-500 mt-1 block">Venues</span>
           </div>
         </div>
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <UtensilsCrossed className="w-6 h-6 text-primary" />
+        <div className="bg-white border border-gray-100 p-8 rounded-2xl shadow-sm flex items-center gap-5">
+          <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <UtensilsCrossed className="w-7 h-7 text-primary" />
           </div>
           <div>
-            <span className="block text-3xl font-heading text-gray-900">
+            <span className="block text-4xl font-heading text-gray-900 leading-none">
               {Object.values(countsByVenue).reduce((a, b) => a + b, 0)}
             </span>
-            <span className="text-sm text-gray-500">Menu Items</span>
+            <span className="text-sm text-gray-500 mt-1 block">Menu Items</span>
           </div>
         </div>
       </div>
 
       {/* Venues Section */}
       <section className="mb-12">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-heading text-gray-900">Your Venues</h2>
-          <Link href="/dashboard/venues/new" className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
-            <Plus className="w-4 h-4" />
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
+          <h2 className="text-2xl font-heading text-gray-900">Your Venues</h2>
+          <Link href="/dashboard/venues/new" className="px-5 py-2.5 bg-primary text-white font-medium rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm">
+            <Plus className="w-5 h-5" />
             New Venue
           </Link>
         </div>
 
         {venues.length === 0 ? (
-          <div className="text-center py-16 px-4 bg-white border border-gray-100 rounded-2xl">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
-              <Store className="w-8 h-8 text-primary" />
+          <div className="flex flex-col items-center justify-center py-20 px-6 bg-white border border-gray-100 rounded-2xl">
+            <div className="w-20 h-20 mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <Store className="w-10 h-10 text-primary" />
             </div>
-            <h3 className="text-xl font-heading text-gray-900 mb-2">No venues yet</h3>
-            <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+            <h3 className="text-2xl font-heading text-gray-900 mb-3">No venues yet</h3>
+            <p className="text-gray-500 mb-8 max-w-md text-center">
               Create your first venue to start tracking allergens and managing menus.
             </p>
-            <Link href="/dashboard/venues/new" className="inline-block px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm">
+            <Link href="/dashboard/venues/new" className="px-8 py-4 bg-primary text-white text-lg font-medium rounded-xl hover:bg-primary/90 transition-colors shadow-md">
               Create Your First Venue
             </Link>
           </div>
