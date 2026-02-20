@@ -43,9 +43,10 @@ const { data, error } = await supabase.rpc('my_rpc_function', {
 - `src/lib/supabase/types.ts` - Contains `Functions` interface (still define your RPCs here for documentation)
 - Any component calling `supabase.rpc()` with parameters
 
-## Example
+## Examples
 
-See [JoinVenueForm.tsx](../src/components/dashboard/JoinVenueForm.tsx) for a working implementation.
+- [JoinVenueForm.tsx](../src/components/dashboard/JoinVenueForm.tsx) - `join_venue_by_code` RPC
+- [new/page.tsx](../src/app/dashboard/venues/new/page.tsx) - `create_venue` RPC
 
 ## Alternative Solutions
 

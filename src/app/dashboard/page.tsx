@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { Building2, UtensilsCrossed, Store, Plus } from 'lucide-react'
 
 interface VenueMembership {
   venue_id: string
@@ -61,31 +62,47 @@ export default async function DashboardPage() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
-          <span className="block text-3xl font-heading text-gray-900 mb-1">{venues.length}</span>
-          <span className="text-sm text-gray-500 uppercase tracking-wider font-medium">Venues</span>
+        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Building2 className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <span className="block text-3xl font-heading text-gray-900">{venues.length}</span>
+            <span className="text-sm text-gray-500">Venues</span>
+          </div>
         </div>
-        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
-          <span className="block text-3xl font-heading text-gray-900 mb-1">
-            {Object.values(countsByVenue).reduce((a, b) => a + b, 0)}
-          </span>
-          <span className="text-sm text-gray-500 uppercase tracking-wider font-medium">Menu Items</span>
+        <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <UtensilsCrossed className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <span className="block text-3xl font-heading text-gray-900">
+              {Object.values(countsByVenue).reduce((a, b) => a + b, 0)}
+            </span>
+            <span className="text-sm text-gray-500">Menu Items</span>
+          </div>
         </div>
       </div>
 
       {/* Venues Section */}
       <section className="mb-12">
-        <div className="flex justify-between items-end mb-6">
+        <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-heading text-gray-900">Your Venues</h2>
-          <Link href="/dashboard/venues/new" className="px-5 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm">
-            + New Venue
+          <Link href="/dashboard/venues/new" className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            New Venue
           </Link>
         </div>
 
         {venues.length === 0 ? (
-          <div className="text-center py-16 px-4 bg-white border border-gray-200 rounded-2xl border-dashed">
-            <p className="text-gray-900 mb-2">You don&apos;t have any venues yet.</p>
-            <p className="text-gray-500 mb-6 text-sm">Create your first venue to start managing menus.</p>
+          <div className="text-center py-16 px-4 bg-white border border-gray-100 rounded-2xl">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <Store className="w-8 h-8 text-primary" />
+            </div>
+            <h3 className="text-xl font-heading text-gray-900 mb-2">No venues yet</h3>
+            <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+              Create your first venue to start tracking allergens and managing menus.
+            </p>
             <Link href="/dashboard/venues/new" className="inline-block px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm">
               Create Your First Venue
             </Link>
