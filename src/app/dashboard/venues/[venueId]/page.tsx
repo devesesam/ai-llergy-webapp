@@ -12,12 +12,18 @@ export default async function VenueDetailPage({ params }: PageProps) {
   const { venueId } = await params
   const supabase = await createClient()
 
+  // Debug: Check auth status
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  console.log('[VenueDetail] Auth check:', { userId: user?.id, authError: authError?.message })
+
   // Get venue details
   const { data: venueData, error } = await supabase
     .from('venues')
     .select('*')
     .eq('id', venueId)
     .single() as { data: Venue | null; error: unknown }
+
+  console.log('[VenueDetail] Venue query:', { venueId, venueData, error })
 
   if (error || !venueData) {
     notFound()
