@@ -172,48 +172,69 @@ Always include:
 - Helpful description (max-width constrained)
 - Primary action button
 
-### Menu Table
+### Menu Table (Inline Spreadsheet)
 
 Location: [MenuTable.tsx](../src/components/dashboard/MenuTable.tsx)
 
-The menu table displays all menu items with their allergens as compact tags:
+The menu table is a spreadsheet-style inline editor for managing menu items:
 
-```tsx
-<table className="w-full">
-  <thead className="bg-gray-50/80">
-    <tr>
-      <th>Dish Name</th>
-      <th>Ingredients</th>
-      <th>Allergens</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-</table>
+```
+| Dish Name | Ingredients | 🥗 | 🥦 | 🥜 | ... (23 allergen columns) | 🗑️ |
+|-----------|-------------|----|----|----|-----------------------------|-----|
+| [editable]| [editable]  | ☐  | ☑  | ☐  | toggle buttons              | del |
+|-----------|-------------|----|----|----|-----------------------------|-----|
+|           + Add new dish                                               |
 ```
 
 **Key features:**
-- Allergens displayed as amber-colored tags in a single column (scalable for all 23 allergens)
-- "Add Item" button in header (always visible, not just in empty state)
-- Links to `/dashboard/venues/[venueId]/menu/new` for adding items
-- Empty state with icon and call-to-action
+- **Inline editing**: Click any cell to edit dish name or ingredients
+- **23 allergen columns**: All allergens from `lib/allergens.ts` as toggle buttons
+- **Add row**: "+" button at bottom adds new row without page navigation
+- **Delete row**: Trash icon appears on hover
+- **Save button**: Shows "Unsaved changes" indicator, saves all changes at once
+- **Browser warning**: `beforeunload` event prevents accidental navigation with unsaved changes
+- **Horizontal scroll**: Table scrolls for all allergen columns
+
+**API endpoint:** `PUT /api/venues/[venueId]/menu`
+- Bulk saves all items (insert/update/delete in one request)
+- Returns items with server-assigned IDs
+
+**State management:**
+- Tracks original items vs current items for dirty detection
+- New rows get temporary IDs (`new_timestamp`)
+- Server returns real IDs after save
 
 ### Venue Settings
 
 Location: [VenueSettings.tsx](../src/components/dashboard/VenueSettings.tsx)
 
-Settings tab allows venue owners/admins to update:
-- Venue name
-- Public URL slug
+Settings tab allows venue owners/admins to:
+- Update venue name
+- Update public URL slug
+- **Delete venue** (owners only, with confirmation)
 
 ```tsx
 <VenueSettings venueId={venueId} venueName={venueName} venueSlug={venueSlug} />
 ```
 
-**API endpoint:** `PATCH /api/venues/[venueId]`
-- Requires authentication
-- Only owners/admins can update
-- Validates slug format (lowercase, numbers, hyphens only)
-- Checks for slug uniqueness
+**API endpoints:**
+- `PATCH /api/venues/[venueId]` - Update settings (owners/admins)
+- `DELETE /api/venues/[venueId]` - Delete venue (owners only)
+
+**Delete Venue Safety:**
+- "Danger Zone" section with red styling
+- Two-step confirmation: click → type venue name → confirm
+- Only owners can delete (not admins)
+- TODO: Consider hiding in production
+
+### Venue Information Tab
+
+Location: [EquipmentList.tsx](../src/components/dashboard/EquipmentList.tsx)
+
+Despite the filename, this is now a general "Venue Information" section:
+- Header: "Venue Information"
+- Button: "Add Venue Information" (links to `/dashboard/venues/[venueId]/info/new`)
+- Placeholder page exists for future form
 
 ### VenueTabs
 
@@ -236,6 +257,8 @@ Three tabs for venue management:
 | Mock equipment data showing | Removed mock data, shows empty state by default | - |
 | No settings tab | Added Settings tab with venue name/slug editing | - |
 | Add Item button only in empty state | Added to table header (always visible) | - |
+| Add Equipment button not working | Changed to Link, renamed to "Add Venue Information" | - |
+| No way to delete venues | Added Danger Zone with typed confirmation | - |
 
 ## Dependencies
 

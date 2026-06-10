@@ -111,14 +111,106 @@ This directive tracks significant changes, fixes, and improvements to the AI-lle
 
 ---
 
+## February 2026 - Functionality Updates (Phase 3)
+
+### Add Venue Information Button Fixed
+
+**Problem:** "Add Equipment" button didn't work and was too equipment-specific.
+
+**Solution:**
+- Renamed to "Add Venue Information" (more general)
+- Changed from `<button>` to `<Link>` pointing to `/dashboard/venues/[venueId]/info/new`
+- Created placeholder page for future venue information form
+- Changed icon from ChefHat to Info
+
+**Files Modified:**
+- `src/components/dashboard/EquipmentList.tsx` - Renamed, added Link
+- `src/app/dashboard/venues/[venueId]/info/new/page.tsx` - New placeholder page
+
+### Delete Venue Functionality
+
+**Problem:** No way to delete venues during testing.
+
+**Solution:**
+- Added "Danger Zone" section to VenueSettings component
+- Two-step confirmation: click button, then type venue name to confirm
+- Created `DELETE /api/venues/[venueId]` endpoint
+- Only venue owners can delete (not admins)
+
+**Files Modified:**
+- `src/components/dashboard/VenueSettings.tsx` - Added danger zone UI
+- `src/app/api/venues/[venueId]/route.ts` - Added DELETE handler
+
+**Security Features:**
+- Typed confirmation required (must type exact venue name)
+- Only owners can delete (role check)
+- TODO comment added to consider hiding in production
+
+---
+
+## February 2026 - Menu Table Redesign (Phase 4)
+
+### Inline-Editable Spreadsheet Interface
+
+**Problem:** Menu table required navigating to separate pages to add/edit items. Only showed 3 allergens as tags.
+
+**Solution:** Complete redesign as spreadsheet-style inline editing:
+
+**New Features:**
+- All 23 allergens displayed as toggle columns (2 dietary + 21 allergens)
+- Inline editing for dish name and ingredients (click to edit)
+- Toggle buttons for each allergen per dish
+- "Add new dish" button at bottom of table (+ row)
+- Save Changes button with dirty state tracking
+- Browser `beforeunload` warning for unsaved changes
+- Delete row button (appears on hover)
+- Horizontal scroll for all allergen columns
+- Success/error messages on save
+
+**Files Modified:**
+- `src/components/dashboard/MenuTable.tsx` - Complete rewrite
+
+**Files Created:**
+- `src/app/api/venues/[venueId]/menu/route.ts` - PUT endpoint for bulk save
+
+**API Behavior:**
+- PUT request with all items
+- Inserts new items (IDs starting with `new_`)
+- Updates existing items
+- Deletes items removed from the list
+- Returns all items with server-assigned IDs
+
+### Allergen Data Format Fix
+
+**Problem:** Allergens showing "None listed" even though data existed in Supabase.
+
+**Root Cause:** Data format mismatch:
+- **Database stores**: `allergen_profile: {dairy_free: true, gluten_free: false, ...}` (JSONB object)
+- **Component expected**: `allergens: ["dairy", "gluten", ...]` (array of IDs)
+
+**Solution:** Added conversion utilities in MenuTable:
+- `allergenIdToProfileKey()` - Maps "dairy" → "dairy_free"
+- `profileKeyToAllergenId()` - Maps "dairy_free" → "dairy"
+- `profileToArray()` - Converts JSONB object to array for UI
+- `arrayToProfile()` - Converts array back to JSONB for saving
+
+**Key mapping rules:**
+| Allergen ID | Profile Key |
+|-------------|-------------|
+| `dairy` | `dairy_free` |
+| `gluten` | `gluten_free` |
+| `peanuts` | `peanut_free` |
+| `treenuts` | `tree_nut_free` |
+
+---
+
 ## Known TODOs
 
 | Item | Priority | Notes |
 |------|----------|-------|
-| Equipment data from Supabase | Medium | Currently empty, needs DB schema |
-| Menu item edit modal | Medium | Edit button exists but no functionality |
-| Filter/Export functionality | Low | Buttons exist but non-functional |
+| Venue information form | Medium | Placeholder page exists at `/info/new` |
 | Import function (CSV/Sheets) | Low | User-requested, needs design |
+| Hide/protect delete venue in production | Low | Currently visible for testing |
 
 ---
 

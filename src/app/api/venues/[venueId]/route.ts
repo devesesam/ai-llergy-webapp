@@ -105,3 +105,68 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   return NextResponse.json({ venue: updatedVenue })
 }
+
+export async function DELETE(request: Request, context: RouteContext) {
+  const { venueId } = await context.params
+  const cookieStore = await cookies()
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // Server component - ignore
+          }
+        },
+      },
+    }
+  )
+
+  // Check authentication
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Check if user is the owner of this venue (only owners can delete)
+  const { data: membership, error: membershipError } = await supabase
+    .from('venue_members')
+    .select('role')
+    .eq('venue_id', venueId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (membershipError || !membership) {
+    return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+  }
+
+  // Only owners can delete venues
+  if (membership.role !== 'owner') {
+    return NextResponse.json({ error: 'Only venue owners can delete venues' }, { status: 403 })
+  }
+
+  // Delete venue (cascading deletes should handle related data)
+  const { error: deleteError } = await supabase
+    .from('venues')
+    .delete()
+    .eq('id', venueId)
+
+  if (deleteError) {
+    return NextResponse.json(
+      { error: 'Failed to delete venue' },
+      { status: 500 }
+    )
+  }
+
+  return NextResponse.json({ success: true })
+}

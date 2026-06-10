@@ -108,6 +108,87 @@ const supabase = createServerClient(
 
 **File:** [src/app/api/venues/[venueId]/route.ts](../src/app/api/venues/[venueId]/route.ts)
 
+---
+
+### DELETE /api/venues/[venueId]
+
+**Purpose:** Permanently delete a venue and all its data.
+
+**Authentication:** Required (session cookie)
+
+**Authorization:** User must be venue `owner` (admins cannot delete)
+
+**Response:**
+```json
+{
+  "success": true
+}
+```
+
+**Error Responses:**
+| Status | Condition |
+|--------|-----------|
+| 401 | Not authenticated |
+| 403 | Not owner (only owners can delete) |
+| 500 | Database delete failed |
+
+**Notes:**
+- Cascading deletes handle related data (menu_items, venue_members, submissions)
+- This action is irreversible
+- Frontend requires typed confirmation (venue name) before calling
+
+**File:** [src/app/api/venues/[venueId]/route.ts](../src/app/api/venues/[venueId]/route.ts)
+
+---
+
+### PUT /api/venues/[venueId]/menu
+
+**Purpose:** Bulk save/update menu items for a venue (inline editing).
+
+**Authentication:** Required (session cookie)
+
+**Authorization:** User must be venue member (any role)
+
+**Request Body:**
+```json
+{
+  "items": [
+    {
+      "id": "uuid or new_timestamp",
+      "name": "Dish Name",
+      "ingredients": "ingredient list",
+      "allergens": ["dairy", "gluten"],
+      "price": null,
+      "is_active": true,
+      "isNew": false
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "items": [/* all current menu items with server-assigned IDs */]
+}
+```
+
+**Behavior:**
+- Items with `isNew: true` or IDs starting with `new_` are inserted
+- Existing items are updated
+- Items missing from the request (but exist in DB) are deleted
+- Returns all items after operation with proper IDs
+
+**Error Responses:**
+| Status | Condition |
+|--------|-----------|
+| 401 | Not authenticated |
+| 403 | Not a venue member |
+| 400 | Invalid request format |
+| 500 | Database operation failed |
+
+**File:** [src/app/api/venues/[venueId]/menu/route.ts](../src/app/api/venues/[venueId]/menu/route.ts)
+
 ## Adding New Endpoints
 
 1. Create route file in appropriate directory under `src/app/api/`
