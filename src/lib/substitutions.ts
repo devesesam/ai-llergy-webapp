@@ -52,16 +52,24 @@ export function parseAllergenList(raw: string | undefined): string[] {
 }
 
 /**
+ * Read the introduced-ALLERGEN cell, tolerating header variants like
+ * "Introduces" or "Introduces allergy". Deliberately ignores any
+ * "introduces ingredient" column (free-text, not allergen ids).
+ */
+function getIntroducedAllergensRaw(row: Record<string, string | undefined>): string {
+  for (const key of Object.keys(row)) {
+    const k = key.trim().toLowerCase();
+    if (k === "introduces" || (k.includes("introduc") && k.includes("allerg"))) {
+      return row[key] || "";
+    }
+  }
+  return "";
+}
+
+/**
  * Build a Substitution from a raw sheet row. Returns null for blank/invalid rows.
  */
-export function parseSubstitutionRow(row: {
-  Dish?: string;
-  Action?: string;
-  Ingredient?: string;
-  Substitute?: string;
-  Solves?: string;
-  Introduces?: string;
-}): Substitution | null {
+export function parseSubstitutionRow(row: Record<string, string | undefined>): Substitution | null {
   const dish = (row.Dish || "").trim();
   const actionRaw = (row.Action || "").trim().toLowerCase();
   const solves = parseAllergenList(row.Solves);
@@ -76,7 +84,7 @@ export function parseSubstitutionRow(row: {
     ingredient: (row.Ingredient || "").trim(),
     substitute: (row.Substitute || "").trim(),
     solves,
-    introduces: action === "substitute" ? parseAllergenList(row.Introduces) : [],
+    introduces: action === "substitute" ? parseAllergenList(getIntroducedAllergensRaw(row)) : [],
   };
 }
 

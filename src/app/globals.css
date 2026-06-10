@@ -197,8 +197,8 @@ header h1 {
 .allergen-grid__rows .allergen-option {
   flex-direction: row;
   align-items: center;
-  justify-content: flex-start;
-  text-align: left;
+  justify-content: center;
+  text-align: center;
   aspect-ratio: auto;
   width: 100%;
   min-height: 0;
@@ -213,7 +213,7 @@ header h1 {
 }
 
 .allergen-grid__rows .allergen-option .label {
-  text-align: left;
+  text-align: center;
 }
 
 /* Allergen Group (Expandable) Styles */
