@@ -285,27 +285,47 @@ Rules:
 - Handle synonyms (e.g., "lactose" → dairy, "wheat" → gluten)
 - Handle related terms (e.g., "tree nuts" → pistachio, walnut, almond)
 - Only return allergens from the known list
-- If no matches, return empty array
-
-Respond with ONLY a JSON array of matching allergen IDs, nothing else.
-Example: ["dairy", "gluten"]`;
+- If no matches, return an empty list`;
 
   try {
     const response = await client.messages.create({
-      model: "claude-3-5-haiku-20241022",
-      max_tokens: 100,
+      model: "claude-haiku-5-5",
+      // Room for thinking (counts toward max_tokens) plus the short answer
+      max_tokens: 1024,
+      output_config: {
+        effort: "low",
+        format: {
+          type: "json_schema",
+          schema: {
+            type: "object",
+            properties: {
+              allergens: {
+                type: "array",
+                items: { type: "string", enum: KNOWN_ALLERGENS },
+              },
+            },
+            required: ["allergens"],
+            additionalProperties: false,
+          },
+        },
+      },
       messages: [{ role: "user", content: prompt }],
     });
 
-    const content = response.content[0];
-    if (content.type !== "text") return [];
+    // Refusal or truncation: no usable answer
+    if (response.stop_reason !== "end_turn") {
+      console.error("AI interpretation stopped early:", response.stop_reason);
+      return [];
+    }
 
-    // Parse the JSON response
-    const parsed = JSON.parse(content.text);
-    if (!Array.isArray(parsed)) return [];
+    // The response can begin with thinking blocks - find the text block by type
+    const content = response.content.find(block => block.type === "text");
+    if (!content) return [];
+
+    const parsed: { allergens: string[] } = JSON.parse(content.text);
 
     // Validate each ID is in our known list
-    return parsed.filter((id: string) => KNOWN_ALLERGENS.includes(id));
+    return parsed.allergens.filter(id => KNOWN_ALLERGENS.includes(id));
   } catch (error) {
     console.error("AI interpretation failed:", error);
     return [];

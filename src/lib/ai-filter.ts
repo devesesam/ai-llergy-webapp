@@ -18,6 +18,30 @@ interface AIFilterResponse {
   reason: string;
 }
 
+// Structured output schema for analyzeItemBatch (root must be an object)
+const AI_FILTER_SCHEMA = {
+  type: "object",
+  properties: {
+    items: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          itemName: { type: "string" },
+          status: { type: "string", enum: ["safe", "caution", "excluded"] },
+          confidence: { type: "integer" },
+          warnings: { type: "array", items: { type: "string" } },
+          reason: { type: "string" },
+        },
+        required: ["itemName", "status", "confidence", "warnings", "reason"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["items"],
+  additionalProperties: false,
+};
+
 /**
  * Get the strictest severity from a list of severities
  * Order: life_threatening > allergy > preference
@@ -226,34 +250,38 @@ Common knowledge:
 
 Be conservative - if you're not sure, lower the confidence score.
 
-Respond with ONLY a valid JSON array in this exact format, no other text:
-[
-  {
-    "itemName": "Exact Item Name",
-    "status": "safe",
-    "confidence": 85,
-    "warnings": [],
-    "reason": "No restricted ingredients found in listed ingredients"
-  }
-]`;
+Return one entry per menu item, using the exact item name as "itemName".`;
 
   const response = await client.messages.create({
-    model: "claude-3-5-haiku-20241022",
-    max_tokens: 2000,
+    model: "claude-haiku-5-5",
+    // Haiku 5.5 thinks by default and thinking counts toward max_tokens
+    max_tokens: 16000,
+    output_config: {
+      effort: "medium",
+      format: { type: "json_schema", schema: AI_FILTER_SCHEMA },
+    },
     messages: [{ role: "user", content: prompt }],
   });
 
-  const content = response.content[0];
-  if (content.type !== "text") {
-    throw new Error("Unexpected response type from AI");
+  // Refusal or truncation: throw so the caller marks the batch as caution
+  if (response.stop_reason !== "end_turn") {
+    throw new Error(`AI analysis stopped early: ${response.stop_reason}`);
   }
 
-  // Parse the JSON response
-  const parsed: AIFilterResponse[] = JSON.parse(content.text);
+  // The response can begin with thinking blocks - find the text block by type
+  const content = response.content.find(block => block.type === "text");
+  if (!content) {
+    throw new Error("No text in AI response");
+  }
+
+  const parsed: { items: AIFilterResponse[] } = JSON.parse(content.text);
   const resultMap = new Map<string, AIFilterResponse>();
 
-  for (const result of parsed) {
-    resultMap.set(result.itemName, result);
+  for (const result of parsed.items) {
+    resultMap.set(result.itemName, {
+      ...result,
+      confidence: Math.min(100, Math.max(0, result.confidence)),
+    });
   }
 
   // Ensure all items have a result (fallback to caution if missing)
