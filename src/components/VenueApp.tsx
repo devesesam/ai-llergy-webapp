@@ -8,6 +8,8 @@ import SeverityModal from "@/components/SeverityModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import MenuResults from "@/components/MenuResults";
 import AutocompleteInput from "@/components/AutocompleteInput";
+import MyOrder from "@/components/MyOrder";
+import { OrderLine, changeQty, loadSession, saveSession } from "@/lib/my-order";
 import { Allergen, SelectedAllergen, CustomTag } from "@/lib/allergens";
 import type { IngredientIndex } from "@/lib/ingredients";
 import type { VenueConfig } from "@/lib/venues";
@@ -47,17 +49,64 @@ export default function VenueApp({ venue }: { venue: VenueConfig }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState<ResultsData | null>(null);
   const [ingredientIndex, setIngredientIndex] = useState<IngredientIndex | null>(null);
+  const [order, setOrder] = useState<OrderLine[]>([]);
+  const [showOrder, setShowOrder] = useState(false);
+  const [restored, setRestored] = useState(false);
 
   // Modal state for severity selection (shown before submit)
   const [showSeverityModal, setShowSeverityModal] = useState(false);
 
+  // A refresh at the table brings the guest back to their results and order (same venue,
+  // within a few hours). Nothing is restored on a fresh visit.
   useEffect(() => {
-    // Show disclaimer modal after a short delay
-    const timer = setTimeout(() => {
-      setShowDisclaimer(true);
-    }, 500);
-    return () => clearTimeout(timer);
+    const s = loadSession<ResultsData>(venue.slug);
+    if (s) {
+      setSelectedAllergens(s.selectedAllergens);
+      setCustomAllergenIds(s.customAllergenIds);
+      setCustomTags(s.customTags);
+      setResults(s.results);
+      setOrder(s.order);
+      setShowOrder(window.location.hash === "#my-order" && s.order.length > 0);
+    }
+    setRestored(true);
+    // Disclaimer for a fresh visit only (a restored guest already agreed).
+    const timer = s ? null : setTimeout(() => setShowDisclaimer(true), 500);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [venue.slug]);
+
+  useEffect(() => {
+    if (!restored) return;
+    saveSession(
+      venue.slug,
+      results
+        ? { v: 1, savedAt: Date.now(), selectedAllergens, customAllergenIds, customTags, results, order }
+        : null
+    );
+  }, [restored, venue.slug, results, order, selectedAllergens, customAllergenIds, customTags]);
+
+  // The summary is its own history entry, so the phone's Back button returns to the menu.
+  useEffect(() => {
+    const onPop = () => setShowOrder(window.location.hash === "#my-order");
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
   }, []);
+  const openOrder = () => {
+    try {
+      window.history.pushState(null, "", "#my-order");
+    } catch {
+      /* ignore */
+    }
+    setShowOrder(true);
+    window.scrollTo({ top: 0 });
+  };
+  const closeOrder = () => {
+    if (window.location.hash === "#my-order") window.history.back();
+    else setShowOrder(false);
+  };
+  const changeOrder = (name: string, notes: string[], delta: number) =>
+    setOrder((o) => changeQty(o, name, notes, delta));
 
   // This venue's ingredient list for the search dropdown. If it fails, search still
   // offers allergens, and anything else goes to the AI backup as before.
@@ -185,6 +234,9 @@ export default function VenueApp({ venue }: { venue: VenueConfig }) {
   };
 
   const handleStartOver = () => {
+    if (order.length > 0 && !window.confirm("Start over? This clears your order.")) return;
+    setOrder([]);
+    setShowOrder(false);
     setResults(null);
     setPendingAllergenIds([]);
     setSelectedAllergens([]);
@@ -231,6 +283,16 @@ export default function VenueApp({ venue }: { venue: VenueConfig }) {
             <p className="subtitle">{venue.name}</p>
           </header>
 
+          {showOrder ? (
+            <MyOrder
+              order={order}
+              selectedAllergens={selectedAllergens}
+              customAllergenIds={customAllergenIds}
+              customTags={customTags}
+              onChange={(name, delta) => changeOrder(name, [], delta)}
+              onBack={closeOrder}
+            />
+          ) : (
           <MenuResults
             safeItems={results.safeItems}
             cautionItems={results.cautionItems}
@@ -241,8 +303,12 @@ export default function VenueApp({ venue }: { venue: VenueConfig }) {
             selectedAllergens={selectedAllergens}
             customAllergenIds={customAllergenIds}
             customTags={customTags}
+            order={order}
+            onOrder={changeOrder}
+            onShowOrder={openOrder}
             onStartOver={handleStartOver}
           />
+          )}
         </div>
       </>
     );

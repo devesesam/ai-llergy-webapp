@@ -8,6 +8,9 @@ interface MenuItemProps {
   ingredients: string;
   warning?: string;
   modifications?: string[];
+  /** In My Order: how many, and +1 / -1. Omitted → no Add button. */
+  qty?: number;
+  onQty?: (delta: number) => void;
 }
 
 /** The chef's swap as shown to guests: "… (makes it Dairy-free). Note: adds Garlic". */
@@ -19,6 +22,8 @@ export default function MenuItem({
   ingredients,
   warning,
   modifications,
+  qty = 0,
+  onQty,
 }: MenuItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const hasModifications = !!modifications && modifications.length > 0;
@@ -67,6 +72,27 @@ export default function MenuItem({
               <li key={i}>{showMod(mod)}</li>
             ))}
           </ul>
+        </div>
+      )}
+      {onQty && (
+        <div className="menu-item__order">
+          {qty === 0 ? (
+            <button type="button" className="menu-item__add" onClick={() => onQty(1)}>
+              + Add to My Order
+            </button>
+          ) : (
+            <span className="menu-item__stepper">
+              <button type="button" onClick={() => onQty(-1)} aria-label={`One less ${name}`}>
+                −
+              </button>
+              <span className="menu-item__qty" aria-live="polite">
+                {qty} in My Order
+              </span>
+              <button type="button" onClick={() => onQty(1)} aria-label={`One more ${name}`}>
+                +
+              </button>
+            </span>
+          )}
         </div>
       )}
     </div>

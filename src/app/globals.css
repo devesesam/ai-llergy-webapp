@@ -2181,3 +2181,119 @@ header h1 {
   font-weight: 500;
   color: var(--color-text-muted);
 }
+/* ── My Order (Tom, 2026-10-28; appended) ──────────────────────────────────────
+   Add / stepper on each dish, a sticky "View My Order" bar, and the summary a guest
+   shows their waiter. No prices on the summary. */
+.menu-item__order {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
+}
+.menu-item__add,
+.menu-item__stepper button,
+.my-order__stepper button {
+  min-height: 44px;
+  min-width: 44px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-text);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.menu-item__add {
+  padding: 0 1.1rem;
+}
+.menu-item__stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.menu-item__stepper button,
+.my-order__stepper button {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+.menu-item__qty {
+  font-weight: 700;
+}
+.results-container {
+  padding-bottom: 5.5rem; /* room for the sticky bar */
+}
+.my-order-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.75rem 16px calc(0.75rem + env(safe-area-inset-bottom));
+  background: var(--color-background);
+  border-top: 1px solid var(--color-border);
+  z-index: 50;
+}
+.my-order-bar .btn {
+  max-width: 600px;
+  margin: 0 auto;
+  display: block;
+}
+.my-order__banner {
+  background: var(--color-text);
+  color: var(--color-surface);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin-bottom: 1.25rem;
+}
+.my-order__title {
+  font-size: 1.4rem;
+  margin: 1.25rem 0 0.5rem;
+}
+.my-order__empty {
+  color: var(--color-text);
+  opacity: 0.7;
+}
+.my-order__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.my-order__line {
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.85rem 0;
+}
+.my-order__line-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.my-order__qty {
+  font-size: 1.35rem;
+  font-weight: 800;
+  min-width: 2.6rem;
+}
+.my-order__name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+}
+.my-order__stepper {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+.my-order__notes {
+  margin: 0.4rem 0 0 3.2rem;
+  padding-left: 1rem;
+  font-size: 1.05rem;
+  line-height: 1.4;
+}
+.my-order__notes li {
+  margin-top: 0.2rem;
+}
+/* The summary never hides a note behind a sticky button: Back sits after the list. */
+.my-order .action-area {
+  position: static;
+  margin-top: 1.25rem;
+}

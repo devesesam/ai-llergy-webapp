@@ -6,12 +6,14 @@ interface SelectionSummaryProps {
   selectedAllergens: SelectedAllergen[];
   customAllergenIds?: string[];
   customTags?: CustomTag[];
+  title?: string;
 }
 
 export default function SelectionSummary({
   selectedAllergens,
   customAllergenIds = [],
   customTags = [],
+  title = "Your Selections",
 }: SelectionSummaryProps) {
   // Filter out custom allergen IDs that are already in selectedAllergens (to avoid duplicates)
   const selectedIds = new Set(selectedAllergens.map(s => s.id));
@@ -51,7 +53,7 @@ export default function SelectionSummary({
 
   return (
     <div className="selection-summary">
-      <h3 className="selection-summary__title">Your Selections</h3>
+      <h3 className="selection-summary__title">{title}</h3>
       <div className="selection-summary__pills">
         {pills.map(pill => (
           <span key={pill.key} className="selection-pill">

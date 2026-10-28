@@ -1,9 +1,10 @@
 "use client";
 
 import AccordionSection from "./AccordionSection";
-import MenuItem from "./MenuItem";
+import MenuItem, { showMod } from "./MenuItem";
 import SelectionSummary from "./SelectionSummary";
 import { SelectedAllergen, CustomTag } from "@/lib/allergens";
+import { OrderLine, dishCount } from "@/lib/my-order";
 
 interface MenuItemData {
   name: string;
@@ -23,6 +24,10 @@ interface MenuResultsProps {
   modifiedItems?: ModifiedItemData[];
   excludedCount: number;
   ingredientsChecked?: boolean;
+  order?: OrderLine[];
+  /** +1 / -1 a dish; `notes` are what the waiter must see for it. */
+  onOrder?: (name: string, notes: string[], delta: number) => void;
+  onShowOrder?: () => void;
   selectedAllergens: SelectedAllergen[];
   customAllergenIds?: string[];
   customTags?: CustomTag[];
@@ -39,6 +44,9 @@ export default function MenuResults({
   modifiedItems = [],
   excludedCount,
   ingredientsChecked = false,
+  order = [],
+  onOrder,
+  onShowOrder,
   selectedAllergens,
   customAllergenIds = [],
   customTags = [],
@@ -46,6 +54,12 @@ export default function MenuResults({
 }: MenuResultsProps) {
   const totalSafe = safeItems.length + cautionItems.length;
   const totalAvailable = totalSafe + modifiedItems.length + checkItems.length;
+  const n = dishCount(order);
+  // Order controls for one dish, carrying the notes the waiter must see with it.
+  const orderProps = (name: string, notes: string[]) =>
+    onOrder
+      ? { qty: order.find((l) => l.name === name)?.qty ?? 0, onQty: (d: number) => onOrder(name, notes, d) }
+      : {};
 
   return (
     <div className="results-container">
@@ -83,6 +97,7 @@ export default function MenuResults({
               name={item.name}
               price={item.price}
               ingredients={item.ingredients}
+              {...orderProps(item.name, [])}
             />
           ))}
         </AccordionSection>
@@ -103,6 +118,7 @@ export default function MenuResults({
               ingredients={item.ingredients}
               modifications={item.modifications}
               warning={item.warnings.length > 0 ? sentences(item.warnings) : undefined}
+              {...orderProps(item.name, [...item.modifications.map(showMod), ...item.warnings])}
             />
           ))}
         </AccordionSection>
@@ -122,6 +138,7 @@ export default function MenuResults({
               price={item.price}
               ingredients={item.ingredients}
               warning={sentences(item.warnings)}
+              {...orderProps(item.name, item.warnings)}
             />
           ))}
         </AccordionSection>
@@ -141,6 +158,7 @@ export default function MenuResults({
               price={item.price}
               ingredients={item.ingredients}
               warning={sentences(item.warnings)}
+              {...orderProps(item.name, item.warnings)}
             />
           ))}
         </AccordionSection>
@@ -168,6 +186,14 @@ export default function MenuResults({
           Start Over
         </button>
       </div>
+
+      {n > 0 && onShowOrder && (
+        <div className="my-order-bar">
+          <button type="button" className="btn primary-btn full-width" onClick={onShowOrder}>
+            View My Order ({n} dish{n === 1 ? "" : "es"}) →
+          </button>
+        </div>
+      )}
     </div>
   );
 }
