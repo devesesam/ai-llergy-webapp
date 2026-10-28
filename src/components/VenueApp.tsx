@@ -9,6 +9,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import MenuResults from "@/components/MenuResults";
 import AutocompleteInput from "@/components/AutocompleteInput";
 import { Allergen, SelectedAllergen, CustomTag } from "@/lib/allergens";
+import type { IngredientIndex } from "@/lib/ingredients";
 import type { VenueConfig } from "@/lib/venues";
 
 interface MenuItemData {
@@ -18,18 +19,17 @@ interface MenuItemData {
   warnings: string[];
 }
 
-interface ModifiedItemData {
-  name: string;
-  ingredients: string;
-  price: number;
+interface ModifiedItemData extends MenuItemData {
   modifications: string[];
 }
 
 interface ResultsData {
   safeItems: MenuItemData[];
   cautionItems: MenuItemData[];
+  checkItems: MenuItemData[];
   modifiedItems: ModifiedItemData[];
   excludedCount: number;
+  ingredientsChecked: boolean;
 }
 
 /**
@@ -46,6 +46,7 @@ export default function VenueApp({ venue }: { venue: VenueConfig }) {
   const [hasInputText, setHasInputText] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState<ResultsData | null>(null);
+  const [ingredientIndex, setIngredientIndex] = useState<IngredientIndex | null>(null);
 
   // Modal state for severity selection (shown before submit)
   const [showSeverityModal, setShowSeverityModal] = useState(false);
@@ -57,6 +58,21 @@ export default function VenueApp({ venue }: { venue: VenueConfig }) {
     }, 500);
     return () => clearTimeout(timer);
   }, []);
+
+  // This venue's ingredient list for the search dropdown. If it fails, search still
+  // offers allergens, and anything else goes to the AI backup as before.
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/ingredients?venue=${encodeURIComponent(venue.slug)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: IngredientIndex | null) => {
+        if (alive && data && Array.isArray(data.dishes)) setIngredientIndex(data);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [venue.slug]);
 
   // Handle allergen click - simple toggle (no modal)
   const handleAllergenClick = (allergen: Allergen) => {
@@ -155,8 +171,10 @@ export default function VenueApp({ venue }: { venue: VenueConfig }) {
       setResults({
         safeItems: data.safeItems,
         cautionItems: data.cautionItems,
+        checkItems: data.checkItems ?? [],
         modifiedItems: data.modifiedItems ?? [],
         excludedCount: data.excludedCount,
+        ingredientsChecked: !!data.meta?.ingredientsChecked,
       });
     } catch (error) {
       console.error("Submission error:", error);
@@ -216,8 +234,10 @@ export default function VenueApp({ venue }: { venue: VenueConfig }) {
           <MenuResults
             safeItems={results.safeItems}
             cautionItems={results.cautionItems}
+            checkItems={results.checkItems}
             modifiedItems={results.modifiedItems}
             excludedCount={results.excludedCount}
+            ingredientsChecked={results.ingredientsChecked}
             selectedAllergens={selectedAllergens}
             customAllergenIds={customAllergenIds}
             customTags={customTags}
@@ -256,7 +276,7 @@ export default function VenueApp({ venue }: { venue: VenueConfig }) {
             className="logo"
           />
           <h1>Menukey</h1>
-          <p className="subtitle">{venue.name} — select allergens to avoid</p>
+          <p className="subtitle">{venue.name} · select allergens to avoid</p>
         </header>
 
         <main>
@@ -275,6 +295,7 @@ export default function VenueApp({ venue }: { venue: VenueConfig }) {
               customTags={customTags}
               onCustomTagAdd={handleAddCustomTag}
               onCustomTagRemove={handleRemoveCustomTag}
+              ingredientIndex={ingredientIndex}
             />
           </div>
 

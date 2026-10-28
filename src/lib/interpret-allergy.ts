@@ -5,6 +5,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { ALL_FILTERS } from "./allergens";
+import { STOP_WORDS, normWord } from "./ingredients";
 
 const KNOWN_ALLERGENS = ALL_FILTERS.map((a) => a.id);
 
@@ -39,7 +40,8 @@ export const SYNONYM_MAP: Record<string, string[]> = {
   onion: ["onions", "shallot", "shallots", "leek", "leeks"],
   celery: ["celeriac"],
   chili: ["chilli", "chillies", "chilies", "spicy", "hot pepper"],
-  capsicum: ["bell pepper", "bell peppers", "peppers"],
+  // Not plain "peppers": black / white / Sichuan pepper are not capsicum.
+  capsicum: ["bell pepper", "bell peppers"],
   nightshades: ["nightshade", "tomato", "potato", "eggplant", "aubergine", "paprika"],
   lupin: ["lupine", "lupini", "lupin beans"],
   molluscs: ["mollusk", "mollusks", "squid", "octopus", "clam", "clams", "mussel", "mussels", "oyster", "oysters", "scallop", "scallops", "snail", "snails"],
@@ -51,18 +53,6 @@ export interface SearchResult {
   isExactMatch: boolean;
   isFuzzyMatch?: boolean; // True if matched via Levenshtein distance
 }
-
-// Common stop words to filter out when tokenizing phrases
-const STOP_WORDS = new Set([
-  "i", "im", "i'm", "my", "me", "we", "our", "you", "your",
-  "a", "an", "the", "and", "or", "but", "to", "of", "in", "on", "at", "for", "with",
-  "can", "can't", "cant", "cannot", "don't", "dont", "do", "does", "doesn't",
-  "have", "has", "had", "am", "is", "are", "was", "were", "be", "been",
-  "eat", "eating", "consume", "consuming", "take", "taking",
-  "allergic", "allergy", "allergies", "intolerant", "intolerance", "sensitive", "sensitivity",
-  "no", "not", "avoid", "avoiding", "free", "without",
-  "please", "need", "want", "like", "would",
-]);
 
 /**
  * Calculate Levenshtein distance between two strings
@@ -101,130 +91,97 @@ function levenshteinDistance(a: string, b: string): number {
 }
 
 /**
- * Check if two strings are a fuzzy match (within edit distance threshold)
- * Threshold scales with word length: shorter words need closer matches
+ * Is `query` a likely misspelling of `target`? One edit for 4 to 7 letters, two for
+ * 8+; never for shorter words. Only used when nothing else matched (see searchSynonyms),
+ * so a real ingredient ("mint", "salt", "cumin") is never "corrected" to an allergen.
  */
 function isFuzzyMatch(query: string, target: string): boolean {
-  // For very short words (3 or less), require exact or 1 edit
-  // For medium words (4-6), allow up to 2 edits
-  // For longer words (7+), allow up to 2 edits
-  const minLength = Math.min(query.length, target.length);
-  const maxDistance = minLength <= 3 ? 1 : 2;
-
-  // Quick length check - if lengths differ by more than maxDistance, can't match
-  if (Math.abs(query.length - target.length) > maxDistance) {
-    return false;
-  }
-
+  if (query.length < 4) return false;
+  const maxDistance = query.length >= 8 ? 2 : 1;
+  if (Math.abs(query.length - target.length) > maxDistance) return false;
   const distance = levenshteinDistance(query, target);
   return distance <= maxDistance && distance > 0; // distance > 0 means not exact
 }
 
-/**
- * Tokenize a phrase into individual words, filtering stop words
- */
-function tokenize(text: string): string[] {
-  // Split on whitespace and common punctuation
-  const tokens = text
-    .toLowerCase()
-    .split(/[\s,;.!?'"()-]+/)
-    .filter(token => token.length >= 2) // Ignore single characters
-    .filter(token => !STOP_WORDS.has(token));
-
-  return [...new Set(tokens)]; // Remove duplicates
+/** Every searchable allergen term: ids, labels and synonyms, lowercased. */
+function allTerms(): { allergenId: string; term: string }[] {
+  const terms: { allergenId: string; term: string }[] = [];
+  for (const a of ALL_FILTERS) {
+    terms.push({ allergenId: a.id, term: a.id });
+    terms.push({ allergenId: a.id, term: a.label.toLowerCase() });
+  }
+  for (const [allergen, synonyms] of Object.entries(SYNONYM_MAP)) {
+    for (const synonym of synonyms) terms.push({ allergenId: allergen, term: synonym });
+  }
+  return terms;
 }
 
 /**
- * Search for allergens matching a query string
- * Supports: exact matches, substring matches, fuzzy matches, and phrase tokenization
+ * Allergen suggestions for what the guest typed.
+ *
+ * The WHOLE query is matched (filler words like "no" / "free" / "allergy" stripped):
+ *   1. exact: the query is an allergen name or synonym ("egg" → Eggs, and nothing else);
+ *   2. word-prefix: the query starts a word of a term ("glut" → Gluten, "pepper" → Capsicum);
+ *   3. fuzzy (a misspelling, "glutin" → Gluten): only when nothing else matched.
+ * A multi-word query with no whole match ("peanuts or dairy") falls back to exact matches
+ * of its words. Words are never matched inside other words, so "coriander seed" no longer
+ * suggests Sesame and "egg" no longer suggests Nightshades (eggplant).
+ *
+ * `ingredient` says whether the query is an ingredient on this venue's menu (from
+ * searchIngredients): "exact" → exact allergen matches only (so "pea" doesn't suggest
+ * Peanuts, "coconut milk" doesn't suggest Dairy); "partial" → no fuzzy and no word
+ * fallback; "none" (default) → everything above.
  */
-export function searchSynonyms(query: string): SearchResult[] {
-  if (!query || query.trim().length === 0) {
-    return [];
-  }
+export function searchSynonyms(
+  query: string,
+  opts: { ingredient?: "exact" | "partial" | "none" } = {}
+): SearchResult[] {
+  const ingredient = opts.ingredient ?? "none";
+  const tokens = query
+    .toLowerCase()
+    .split(/[^a-z']+/)
+    .filter((t) => t.length > 0 && !STOP_WORDS.has(t));
+  const q = tokens.join(" ");
+  if (!q) return [];
 
-  const normalized = query.toLowerCase().trim();
+  const terms = allTerms();
   const results: SearchResult[] = [];
-  const seenAllergens = new Set<string>();
+  const seen = new Set<string>();
+  const add = (allergenId: string, term: string, kind: "exact" | "prefix" | "fuzzy") => {
+    if (seen.has(allergenId)) return;
+    seen.add(allergenId);
+    results.push({ allergenId, matchedTerm: term, isExactMatch: kind === "exact", isFuzzyMatch: kind === "fuzzy" });
+  };
+  const byName = (a: SearchResult, b: SearchResult) => a.allergenId.localeCompare(b.allergenId);
 
-  // Build a list of all searchable terms: allergen IDs + all synonyms
-  const allTerms: { allergenId: string; term: string }[] = [];
-  for (const allergen of KNOWN_ALLERGENS) {
-    allTerms.push({ allergenId: allergen, term: allergen });
-  }
-  for (const [allergen, synonyms] of Object.entries(SYNONYM_MAP)) {
-    for (const synonym of synonyms) {
-      allTerms.push({ allergenId: allergen, term: synonym });
+  // Plurals count as exact ("peanut" = "peanuts", "eggs" = "egg").
+  const fold = (s: string) => s.split(" ").map(normWord).join(" ");
+  const fq = fold(q);
+  for (const { allergenId, term } of terms) if (term === q || fold(term) === fq) add(allergenId, term, "exact");
+  if (results.length > 0 || ingredient === "exact") return results.sort(byName);
+
+  if (q.length >= 2) {
+    for (const { allergenId, term } of terms) {
+      if (term.startsWith(q) || term.split(" ").some((w) => w.startsWith(q))) add(allergenId, term, "prefix");
     }
-  }
-
-  // Tokenize the input to handle phrases like "i can't eat peanuts or dairy"
-  const tokens = tokenize(normalized);
-  // Also search the full normalized string for multi-word matches like "tree nuts"
-  const searchTerms = tokens.length > 0 ? [...tokens, normalized] : [normalized];
-
-  // Search each token/term
-  for (const searchTerm of searchTerms) {
-    // 1. Exact matches (highest priority)
-    for (const { allergenId, term } of allTerms) {
-      if (term === searchTerm && !seenAllergens.has(allergenId)) {
-        seenAllergens.add(allergenId);
-        results.push({
-          allergenId,
-          matchedTerm: term,
-          isExactMatch: true,
-          isFuzzyMatch: false,
-        });
-      }
-    }
-
-    // 2. Substring/contains matches
-    for (const { allergenId, term } of allTerms) {
-      if (!seenAllergens.has(allergenId)) {
-        // Check if search term is contained in the allergen/synonym
-        // or if the allergen/synonym is contained in the search term
-        if (term.includes(searchTerm) || searchTerm.includes(term)) {
-          seenAllergens.add(allergenId);
-          results.push({
-            allergenId,
-            matchedTerm: term,
-            isExactMatch: false,
-            isFuzzyMatch: false,
-          });
-        }
-      }
-    }
-
-    // 3. Fuzzy matches (only for single words, not phrases)
-    if (!searchTerm.includes(" ") && searchTerm.length >= 3) {
-      for (const { allergenId, term } of allTerms) {
-        // Only fuzzy match single-word terms
-        if (!term.includes(" ") && !seenAllergens.has(allergenId)) {
-          if (isFuzzyMatch(searchTerm, term)) {
-            seenAllergens.add(allergenId);
-            results.push({
-              allergenId,
-              matchedTerm: term,
-              isExactMatch: false,
-              isFuzzyMatch: true,
-            });
-          }
-        }
-      }
-    }
+    if (results.length > 0) return results.sort(byName);
   }
 
-  // Sort: exact matches first, then substring matches, then fuzzy matches
-  return results.sort((a, b) => {
-    // Exact matches first
-    if (a.isExactMatch && !b.isExactMatch) return -1;
-    if (!a.isExactMatch && b.isExactMatch) return 1;
-    // Then non-fuzzy (substring) matches
-    if (!a.isFuzzyMatch && b.isFuzzyMatch) return -1;
-    if (a.isFuzzyMatch && !b.isFuzzyMatch) return 1;
-    // Then alphabetically
-    return a.allergenId.localeCompare(b.allergenId);
-  });
+  if (ingredient !== "none") return results;
+
+  if (tokens.length > 1) {
+    for (const t of tokens) {
+      for (const { allergenId, term } of terms) if (term === t || fold(term) === normWord(t)) add(allergenId, term, "exact");
+    }
+    if (results.length > 0) return results.sort(byName);
+  }
+
+  if (tokens.length === 1) {
+    for (const { allergenId, term } of terms) {
+      if (!term.includes(" ") && isFuzzyMatch(q, term)) add(allergenId, term, "fuzzy");
+    }
+  }
+  return results.sort(byName);
 }
 
 /**

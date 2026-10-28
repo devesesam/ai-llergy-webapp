@@ -10,6 +10,9 @@ interface MenuItemProps {
   modifications?: string[];
 }
 
+/** The chef's swap as shown to guests: "… (makes it Dairy-free). Note: adds Garlic". */
+export const showMod = (mod: string) => mod.replace(" — note: adds ", ". Note: adds ");
+
 export default function MenuItem({
   name,
   price,
@@ -61,7 +64,7 @@ export default function MenuItem({
           </p>
           <ul className="menu-item__substitutions-list">
             {modifications!.map((mod, i) => (
-              <li key={i}>{mod}</li>
+              <li key={i}>{showMod(mod)}</li>
             ))}
           </ul>
         </div>

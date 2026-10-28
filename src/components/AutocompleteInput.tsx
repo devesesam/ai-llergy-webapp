@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { searchSynonyms, SearchResult } from "@/lib/interpret-allergy";
+import { searchSynonyms } from "@/lib/interpret-allergy";
+import { cleanQuery, searchIngredients, type IngredientIndex } from "@/lib/ingredients";
 import { getAllergenById, CustomTag } from "@/lib/allergens";
 import AllergenTag from "./AllergenTag";
 import CustomTagPill from "./CustomTagPill";
@@ -14,7 +15,16 @@ interface AutocompleteInputProps {
   customTags: CustomTag[];
   onCustomTagAdd: (tag: CustomTag) => void;
   onCustomTagRemove: (tagId: string) => void;
+  /** This venue's ingredient index (null while loading or if it failed: allergens only). */
+  ingredientIndex: IngredientIndex | null;
 }
+
+// One dropdown row: a known allergen, or an ingredient found on this menu.
+type Option =
+  | { kind: "allergen"; id: string; matchedTerm: string }
+  | { kind: "ingredient"; key: string; label: string; count: number };
+
+const optionKey = (o: Option) => (o.kind === "allergen" ? `a:${o.id}` : `i:${o.key}`);
 
 export default function AutocompleteInput({
   selectedAllergenIds,
@@ -24,25 +34,25 @@ export default function AutocompleteInput({
   customTags,
   onCustomTagAdd,
   onCustomTagRemove,
+  ingredientIndex,
 }: AutocompleteInputProps) {
   const [inputValue, setInputValue] = useState("");
-  const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
+  const [options, setOptions] = useState<Option[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAddCustom, setShowAddCustom] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const noMatchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Debounced search
+  // Search: allergens first, then ingredients on this menu (instant, local)
   useEffect(() => {
-    // Clear previous timeout
     if (noMatchTimeoutRef.current) {
       clearTimeout(noMatchTimeoutRef.current);
       noMatchTimeoutRef.current = null;
     }
 
     if (!inputValue.trim()) {
-      setSuggestions([]);
+      setOptions([]);
       setShowDropdown(false);
       setShowAddCustom(false);
       onInputChange(false);
@@ -51,20 +61,27 @@ export default function AutocompleteInput({
 
     onInputChange(true);
 
-    // Search synonyms (instant, local)
-    const results = searchSynonyms(inputValue);
+    // An ingredient on this menu is never "corrected" into an allergen (mint is not milk).
+    const ingredients = ingredientIndex ? searchIngredients(ingredientIndex, inputValue) : [];
+    const q = cleanQuery(inputValue);
+    const ingredient = ingredients.some((m) => m.key === q) ? "exact" : ingredients.length > 0 ? "partial" : "none";
+    const allergens = searchSynonyms(inputValue, { ingredient })
+      .filter((r) => !selectedAllergenIds.includes(r.allergenId))
+      .slice(0, 4);
+    const taken = new Set(customTags.map((t) => t.ingredient).filter(Boolean));
+    const next: Option[] = [
+      ...allergens.map((r) => ({ kind: "allergen" as const, id: r.allergenId, matchedTerm: r.matchedTerm })),
+      ...ingredients
+        .filter((m) => !taken.has(m.key))
+        .map((m) => ({ kind: "ingredient" as const, key: m.key, label: m.label, count: m.count })),
+    ];
 
-    // Filter out already selected allergens
-    const filteredResults = results.filter(
-      (r) => !selectedAllergenIds.includes(r.allergenId)
-    );
-
-    setSuggestions(filteredResults);
+    setOptions(next);
     setShowDropdown(true);
     setShowAddCustom(false);
 
-    // If no suggestions, show "Add as custom" option after 500ms
-    if (filteredResults.length === 0) {
+    // Nothing on the menu or in the allergen list: offer the AI backup after 500ms
+    if (next.length === 0) {
       noMatchTimeoutRef.current = setTimeout(() => {
         setShowAddCustom(true);
       }, 500);
@@ -75,7 +92,7 @@ export default function AutocompleteInput({
         clearTimeout(noMatchTimeoutRef.current);
       }
     };
-  }, [inputValue, selectedAllergenIds, onInputChange]);
+  }, [inputValue, selectedAllergenIds, customTags, ingredientIndex, onInputChange]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -94,46 +111,54 @@ export default function AutocompleteInput({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = useCallback(
-    (allergenId: string) => {
-      onAllergenAdd(allergenId);
-      setInputValue("");
-      setSuggestions([]);
-      setShowDropdown(false);
-      setShowAddCustom(false);
-      inputRef.current?.focus();
-    },
-    [onAllergenAdd]
-  );
+  const reset = useCallback(() => {
+    setInputValue("");
+    setOptions([]);
+    setShowDropdown(false);
+    setShowAddCustom(false);
+    onInputChange(false);
+    inputRef.current?.focus();
+  }, [onInputChange]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (suggestions.length === 1) {
-        handleSelect(suggestions[0].allergenId);
-      } else if (suggestions.length === 0 && showAddCustom) {
-        // Allow Enter to add custom tag when no matches
-        handleAddCustomTag();
+  const handleSelect = useCallback(
+    (o: Option) => {
+      if (o.kind === "allergen") {
+        onAllergenAdd(o.id);
+      } else {
+        onCustomTagAdd({
+          id: `ingredient_${o.key.replace(/\s+/g, "_")}`,
+          text: o.label,
+          displayLabel: o.label,
+          ingredient: o.key,
+        });
       }
-    }
-  };
+      reset();
+    },
+    [onAllergenAdd, onCustomTagAdd, reset]
+  );
 
   const handleAddCustomTag = () => {
     const trimmed = inputValue.trim();
     if (!trimmed) return;
 
-    const newTag: CustomTag = {
-      id: `custom_${trimmed.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`,
+    onCustomTagAdd({
+      id: `custom_${trimmed.toLowerCase().replace(/\s+/g, "_")}_${Date.now()}`,
       text: trimmed,
       displayLabel: trimmed.charAt(0).toUpperCase() + trimmed.slice(1),
-    };
+    });
+    reset();
+  };
 
-    onCustomTagAdd(newTag);
-    setInputValue("");
-    setShowDropdown(false);
-    setShowAddCustom(false);
-    onInputChange(false);
-    inputRef.current?.focus();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (options.length > 0) {
+        handleSelect(options[0]);
+      } else if (showAddCustom) {
+        // Allow Enter to add custom tag when no matches
+        handleAddCustomTag();
+      }
+    }
   };
 
   return (
@@ -156,7 +181,7 @@ export default function AutocompleteInput({
           ref={inputRef}
           type="text"
           className={`autocomplete-input${inputValue.trim() ? " autocomplete-input--blocking" : ""}`}
-          placeholder="Type an allergen..."
+          placeholder="Type an allergen or ingredient..."
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -164,18 +189,36 @@ export default function AutocompleteInput({
         />
 
         {/* Dropdown */}
-        {showDropdown && (suggestions.length > 0 || showAddCustom) && (
+        {showDropdown && (options.length > 0 || showAddCustom) && (
           <div ref={dropdownRef} className="autocomplete-dropdown">
-            {suggestions.length > 0 ? (
-              suggestions.slice(0, 5).map((result) => {
-                const allergen = getAllergenById(result.allergenId);
+            {options.length > 0 ? (
+              options.map((o) => {
+                if (o.kind === "ingredient") {
+                  return (
+                    <button
+                      key={optionKey(o)}
+                      type="button"
+                      className="autocomplete-option"
+                      onClick={() => handleSelect(o)}
+                    >
+                      <span className="autocomplete-option__icon">🌿</span>
+                      <span className="autocomplete-option__content">
+                        <span className="autocomplete-option__name">{o.label}</span>
+                        <span className="autocomplete-option__match">
+                          (in {o.count} dish{o.count === 1 ? "" : "es"})
+                        </span>
+                      </span>
+                    </button>
+                  );
+                }
+                const allergen = getAllergenById(o.id);
                 if (!allergen) return null;
                 return (
                   <button
-                    key={result.allergenId}
+                    key={optionKey(o)}
                     type="button"
                     className="autocomplete-option"
-                    onClick={() => handleSelect(result.allergenId)}
+                    onClick={() => handleSelect(o)}
                   >
                     <span className="autocomplete-option__icon">
                       {allergen.icon}
@@ -184,9 +227,9 @@ export default function AutocompleteInput({
                       <span className="autocomplete-option__name">
                         {allergen.label}
                       </span>
-                      {result.matchedTerm !== result.allergenId && (
+                      {o.matchedTerm !== o.id && o.matchedTerm !== allergen.label.toLowerCase() && (
                         <span className="autocomplete-option__match">
-                          ({result.matchedTerm})
+                          ({o.matchedTerm})
                         </span>
                       )}
                     </span>
@@ -196,14 +239,15 @@ export default function AutocompleteInput({
             ) : showAddCustom ? (
               <div className="autocomplete-no-match">
                 <span className="autocomplete-no-match__text">
-                  No matches found for &quot;{inputValue}&quot;
+                  We couldn&apos;t find &quot;{inputValue.trim()}&quot; on this menu. Add it and
+                  we&apos;ll check each dish. Please confirm with staff.
                 </span>
                 <button
                   type="button"
                   className="autocomplete-add-custom"
                   onClick={handleAddCustomTag}
                 >
-                  🏷️ Add as custom restriction
+                  🏷️ Add &quot;{inputValue.trim()}&quot;
                 </button>
               </div>
             ) : null}
@@ -213,7 +257,7 @@ export default function AutocompleteInput({
 
       {/* Helper text */}
       <p className="autocomplete-helper">
-        Type allergens one at a time
+        Type allergens or ingredients one at a time
       </p>
     </div>
   );

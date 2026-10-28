@@ -75,7 +75,7 @@ export default function SeverityModal({
   customTags.forEach((tag) => {
     items.push({
       id: tag.id,
-      icon: "🏷️",
+      icon: tag.ingredient ? "🌿" : "🏷️",
       label: tag.displayLabel,
       isCustomTag: true,
     });
@@ -142,7 +142,8 @@ export default function SeverityModal({
             className="severity-modal__checkbox"
           />
           <span className="severity-modal__agreement-text">
-            I take full responsibility that the information submitted is as accurate as possible
+            I confirm my dietary selections are accurate. I understand ingredients or dishes may
+            change, and I&apos;ll confirm my dietary requirements with staff before ordering.
           </span>
         </label>
 

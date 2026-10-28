@@ -46,7 +46,7 @@ export default function SelectionSummary({
 
   // Free-form custom restrictions
   customTags.forEach(tag => {
-    pills.push({ key: `tag-${tag.id}`, icon: "🏷️", label: tag.displayLabel });
+    pills.push({ key: `tag-${tag.id}`, icon: tag.ingredient ? "🌿" : "🏷️", label: tag.displayLabel });
   });
 
   return (

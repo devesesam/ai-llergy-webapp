@@ -10,7 +10,7 @@ interface CustomTagPillProps {
 export default function CustomTagPill({ tag, onRemove }: CustomTagPillProps) {
   return (
     <span className="custom-tag">
-      <span className="custom-tag__icon">🏷️</span>
+      <span className="custom-tag__icon">{tag.ingredient ? "🌿" : "🏷️"}</span>
       <span className="custom-tag__label">{tag.displayLabel}</span>
       <button
         type="button"

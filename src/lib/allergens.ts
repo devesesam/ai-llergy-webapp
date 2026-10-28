@@ -80,6 +80,8 @@ export interface CustomTag {
   text: string;         // Original user text
   displayLabel: string; // Formatted for display (capitalized)
   type?: SeverityType;  // Severity level (set in SeverityModal)
+  ingredient?: string;  // Folded ingredient term when picked from the menu's ingredient list
+                        // (checked against the sheet, no AI); absent for free text (AI backup)
 }
 
 // Allergen group definition (used for the collapsible "More allergens" dropdown)

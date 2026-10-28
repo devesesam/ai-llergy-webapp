@@ -6,7 +6,6 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { MenuItem } from "./menu-service";
-import { FilterResult, FilteredItem, filterMenu } from "./filter-menu";
 import { CustomTag, SeverityType } from "./allergens";
 import { SEVERITY_THRESHOLDS, getFilterCategory } from "./confidence";
 
@@ -52,112 +51,34 @@ function getStrictestSeverity(severities: SeverityType[]): SeverityType {
   return "preference";
 }
 
+export type AIVerdict = "safe" | "caution" | "excluded";
+
 /**
- * Filter menu using AI for custom tags
- * First applies standard column-based filtering, then uses AI for custom restrictions
+ * The AI BACKUP check, for restrictions the sheet can't answer: free text that isn't
+ * an allergen or an ingredient on this menu, and allergens with no sheet column.
+ * Returns one verdict per dish name; the caller keeps every sheet-derived note (CAN BE,
+ * chef swaps) and only adds this verdict on top. A dish the AI didn't return, or
+ * returned with its own warnings, is never "safe": missing → excluded, warnings → caution.
  */
-export async function filterMenuWithAI(
-  menu: MenuItem[],
-  standardAllergens: string[],
-  customTags: CustomTag[]
-): Promise<FilterResult> {
-  // First, apply standard column-based filtering for known allergens
-  let preFilteredItems = menu;
-  let standardExcludedCount = 0;
-  const standardWarnings = new Map<string, string[]>();
+export async function aiVerdicts(items: MenuItem[], tags: CustomTag[]): Promise<Map<string, AIVerdict>> {
+  const verdicts = new Map<string, AIVerdict>();
+  if (items.length === 0 || tags.length === 0) return verdicts;
 
-  if (standardAllergens.length > 0) {
-    const standardResult = filterMenu(menu, standardAllergens);
-    standardExcludedCount = standardResult.excludedCount;
-
-    // Keep safe and caution items for AI analysis
-    preFilteredItems = [
-      ...standardResult.safeItems.map(f => f.item),
-      ...standardResult.cautionItems.map(f => f.item)
-    ];
-
-    // Track standard warnings for caution items
-    for (const cautionItem of standardResult.cautionItems) {
-      standardWarnings.set(cautionItem.item.name, cautionItem.warnings);
-    }
-  }
-
-  // If no items left after standard filtering, return early
-  if (preFilteredItems.length === 0) {
-    return {
-      safeItems: [],
-      cautionItems: [],
-      modifiableItems: [],
-      excludedCount: standardExcludedCount,
-    };
-  }
-
-  // Analyze remaining items with AI for custom tags
-  const customTagTexts = customTags.map(t => t.text);
-  const aiResults = await analyzeMenuItemsWithAI(preFilteredItems, customTagTexts);
-
-  // Determine the strictest severity threshold from custom tags
-  // Default to "preference" if no severity specified
-  const tagSeverities = customTags.map(t => t.type || "preference");
-  const strictestSeverity = getStrictestSeverity(tagSeverities);
+  const aiResults = await analyzeMenuItemsWithAI(items, tags.map((t) => t.text));
+  const strictestSeverity = getStrictestSeverity(tags.map((t) => t.type || "preference"));
   const threshold = SEVERITY_THRESHOLDS[strictestSeverity];
-
   console.log(`[ai-filter] Using severity threshold: ${strictestSeverity} (${threshold * 100}%)`);
 
-  // Build final results using confidence-based filtering
-  const safeItems: FilteredItem[] = [];
-  const cautionItems: FilteredItem[] = [];
-  let aiExcludedCount = 0;
-
-  for (const item of preFilteredItems) {
+  for (const item of items) {
     const aiResult = aiResults.get(item.name);
-    const existingWarnings = standardWarnings.get(item.name) || [];
-
     if (!aiResult) {
-      // No AI result - exclude for safety
-      aiExcludedCount++;
+      verdicts.set(item.name, "excluded");
       continue;
     }
-
-    // Use confidence score to determine category based on severity threshold
-    const confidenceDecimal = aiResult.confidence / 100;
-    const category = getFilterCategory(confidenceDecimal, threshold);
-
-    if (category === "excluded") {
-      aiExcludedCount++;
-      continue;
-    }
-
-    // Combine standard warnings with AI warnings
-    const combinedWarnings = [...existingWarnings];
-    if (aiResult.warnings.length > 0) {
-      combinedWarnings.push(...aiResult.warnings);
-    }
-
-    if (category === "safe" && combinedWarnings.length === 0) {
-      safeItems.push({
-        item,
-        safe: true,
-        warnings: [],
-        excluded: [],
-      });
-    } else {
-      // caution or has warnings from standard filtering
-      cautionItems.push({
-        item,
-        safe: false,
-        warnings: combinedWarnings.length > 0 ? combinedWarnings : customTagTexts,
-        excluded: [],
-      });
-    }
+    const category = getFilterCategory(aiResult.confidence / 100, threshold);
+    verdicts.set(item.name, category === "safe" && aiResult.warnings.length > 0 ? "caution" : category);
   }
-
-  return {
-    safeItems,
-    cautionItems,
-    modifiableItems: [],
-    excludedCount: standardExcludedCount + aiExcludedCount,
-  };
+  return verdicts;
 }
 
 /**

@@ -12,36 +12,40 @@ interface MenuItemData {
   warnings: string[];
 }
 
-interface ModifiedItemData {
-  name: string;
-  ingredients: string;
-  price: number;
+interface ModifiedItemData extends MenuItemData {
   modifications: string[];
 }
 
 interface MenuResultsProps {
   safeItems: MenuItemData[];
   cautionItems: MenuItemData[];
+  checkItems?: MenuItemData[];
   modifiedItems?: ModifiedItemData[];
   excludedCount: number;
+  ingredientsChecked?: boolean;
   selectedAllergens: SelectedAllergen[];
   customAllergenIds?: string[];
   customTags?: CustomTag[];
   onStartOver: () => void;
 }
 
+/** Notes as sentences: "Can be made Gluten-free on request. May contain truffle. …" */
+const sentences = (notes: string[]) => notes.map((n) => (/[.!?]$/.test(n) ? n : `${n}.`)).join(" ");
+
 export default function MenuResults({
   safeItems,
   cautionItems,
+  checkItems = [],
   modifiedItems = [],
   excludedCount,
+  ingredientsChecked = false,
   selectedAllergens,
   customAllergenIds = [],
   customTags = [],
   onStartOver,
 }: MenuResultsProps) {
   const totalSafe = safeItems.length + cautionItems.length;
-  const totalAvailable = totalSafe + modifiedItems.length;
+  const totalAvailable = totalSafe + modifiedItems.length + checkItems.length;
 
   return (
     <div className="results-container">
@@ -86,7 +90,7 @@ export default function MenuResults({
 
       {modifiedItems.length > 0 && (
         <AccordionSection
-          title="Can be modified for you - subject to kitchen approval"
+          title="Can be modified for you (subject to kitchen approval)"
           count={modifiedItems.length}
           variant="modified"
           defaultOpen={true}
@@ -98,6 +102,7 @@ export default function MenuResults({
               price={item.price}
               ingredients={item.ingredients}
               modifications={item.modifications}
+              warning={item.warnings.length > 0 ? sentences(item.warnings) : undefined}
             />
           ))}
         </AccordionSection>
@@ -105,7 +110,7 @@ export default function MenuResults({
 
       {cautionItems.length > 0 && (
         <AccordionSection
-          title="Modification Suggestions - Subject to kitchen approval"
+          title="Can be made to suit you (subject to kitchen approval)"
           count={cautionItems.length}
           variant="caution"
           defaultOpen={false}
@@ -116,10 +121,35 @@ export default function MenuResults({
               name={item.name}
               price={item.price}
               ingredients={item.ingredients}
-              warning={item.warnings.join(". ")}
+              warning={sentences(item.warnings)}
             />
           ))}
         </AccordionSection>
+      )}
+
+      {checkItems.length > 0 && (
+        <AccordionSection
+          title="Check with staff"
+          count={checkItems.length}
+          variant="caution"
+          defaultOpen={false}
+        >
+          {checkItems.map((item, index) => (
+            <MenuItem
+              key={`check-${index}`}
+              name={item.name}
+              price={item.price}
+              ingredients={item.ingredients}
+              warning={sentences(item.warnings)}
+            />
+          ))}
+        </AccordionSection>
+      )}
+
+      {ingredientsChecked && (
+        <p className="results-excluded">
+          Checked against this menu&apos;s ingredient lists. Please confirm with your waiter.
+        </p>
       )}
 
       {excludedCount > 0 && (
