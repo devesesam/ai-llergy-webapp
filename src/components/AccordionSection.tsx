@@ -40,7 +40,8 @@ export default function AccordionSection({
         className={`accordion__content ${isOpen ? "accordion__content--open" : ""}`}
         aria-hidden={!isOpen}
       >
-        {children}
+        {/* One grid row that animates 0fr → 1fr: no height cap, so a long list is never cut off */}
+        <div className="accordion__inner">{children}</div>
       </div>
     </div>
   );

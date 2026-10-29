@@ -2297,3 +2297,23 @@ header h1 {
   position: static;
   margin-top: 1.25rem;
 }
+
+/* ── Results sections: no height cap (appended 2026-10-29) ─────────────────────
+   The open state used max-height: 2000px, so a section taller than that (e.g. Kisa
+   with Eggs selected: 32 dishes) was silently cut off. Animate a single grid row from
+   0fr to 1fr instead: same slide, natural height, nothing clipped. Older browsers
+   without grid-row transitions just open without the slide. */
+.accordion__content {
+  max-height: none;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+.accordion__content--open {
+  max-height: none;
+  grid-template-rows: 1fr;
+}
+.accordion__inner {
+  min-height: 0;
+  overflow: hidden;
+}
