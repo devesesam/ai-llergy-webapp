@@ -63,4 +63,4 @@ export const dishCount = (order: OrderLine[]) => order.reduce((n, l) => n + l.qt
 
 /** The exact banner Tom asked for. */
 export const WAITER_MESSAGE =
-  "Please show this summary to your waiter to confirm your dietary requirements and place your order. Your order has not yet been placed.";
+  "Please show this summary to one of our team to confirm your dietary requirements and place your order. Your order has not yet been placed.";

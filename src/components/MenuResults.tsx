@@ -166,7 +166,7 @@ export default function MenuResults({
 
       {ingredientsChecked && (
         <p className="results-excluded">
-          Checked against this menu&apos;s ingredient lists. Please confirm with your waiter.
+          Checked against this menu&apos;s ingredient lists. Please confirm with one of our team.
         </p>
       )}
 
